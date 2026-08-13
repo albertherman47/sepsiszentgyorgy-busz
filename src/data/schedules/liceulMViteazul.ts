@@ -146,7 +146,7 @@ export const liceulMViteazulSchedules: Schedule[] = [
       '18:39',
       '20:09',
       '22:09',
-      '24:09',
+      '00:09',
     ],
     weekendTimes: [
       '05:54',

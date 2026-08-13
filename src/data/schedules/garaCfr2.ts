@@ -3,7 +3,7 @@ import type { Schedule } from '../../types/bus';
 export const garaCfr2Schedules: Schedule[] = [
   {
     stopId: 'gara-cfr-2',
-    lineId: '3',
+    lineId: 'line-3',
     direction: {
       hu: 'Szotyor',
       ro: 'Coșeni',
@@ -39,7 +39,7 @@ export const garaCfr2Schedules: Schedule[] = [
 
   {
     stopId: 'gara-cfr-2',
-    lineId: '4',
+    lineId: 'line-4',
     direction: {
       hu: 'Szépmező',
       ro: 'Câmpul Frumos',
@@ -59,7 +59,7 @@ export const garaCfr2Schedules: Schedule[] = [
       '18:45',
       '20:15',
       '22:15',
-      '24:15',
+      '00:15',
     ],
     weekendTimes: [
       '06:00',
@@ -76,7 +76,7 @@ export const garaCfr2Schedules: Schedule[] = [
 
   {
     stopId: 'gara-cfr-2',
-    lineId: '5',
+    lineId: 'line-5',
     direction: {
       hu: 'Sepsi Aréna',
       ro: 'Arena Sepsi',
@@ -123,7 +123,7 @@ export const garaCfr2Schedules: Schedule[] = [
 
   {
     stopId: 'gara-cfr-2',
-    lineId: '9',
+    lineId: 'line-9',
     direction: {
       hu: 'Sugásfürdő',
       ro: 'Șugaș Băi',
@@ -144,7 +144,7 @@ export const garaCfr2Schedules: Schedule[] = [
 
   {
     stopId: 'gara-cfr-2',
-    lineId: '1D',
+    lineId: 'line-1d',
     direction: {
       hu: 'Szépmező',
       ro: 'Câmpul Frumos',
@@ -171,7 +171,7 @@ export const garaCfr2Schedules: Schedule[] = [
 
   {
     stopId: 'gara-cfr-2',
-    lineId: '2D',
+    lineId: 'line-2d',
     direction: {
       hu: 'Szépmező',
       ro: 'Câmpul Frumos',
@@ -193,7 +193,7 @@ export const garaCfr2Schedules: Schedule[] = [
 
   {
     stopId: 'gara-cfr-2',
-    lineId: '5D',
+    lineId: 'line-5d',
     direction: {
       hu: 'Szépmező',
       ro: 'Câmpul Frumos',

@@ -1,4 +1,4 @@
-import { Clock, MapPin, X } from 'lucide-react';
+import { CalendarDays, Clock, MapPin, X } from 'lucide-react';
 import { formatCountdown } from '../utils/timeUtils';
 import { useBusData } from '../hooks/useBusData';
 import { useAppStore } from '../store/useAppStore';
@@ -19,9 +19,8 @@ export function StopCard({
     upcomingByLine,
   } = useBusData();
 
-  const setSelectedStopId = useAppStore(
-    (s) => s.setSelectedStopId,
-  );
+  const setSelectedStopId = useAppStore((s) => s.setSelectedStopId);
+  const setFullScheduleStopId = useAppStore((s) => s.setFullScheduleStopId);
 
   // Nincs kiválasztott megálló
   if (!selectedStop) {
@@ -66,18 +65,25 @@ export function StopCard({
           </h2>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setSelectedStopId(null)}
-          className="rounded-lg p-2 text-[var(--text-muted)] transition hover:bg-[var(--surface)] hover:text-[var(--text-h)]"
-          aria-label={
-            language === 'hu'
-              ? 'Bezárás'
-              : 'Închide'
-          }
-        >
-          <X className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={() => setFullScheduleStopId(selectedStop.id)}
+            className="rounded-lg p-2 text-[var(--text-muted)] transition hover:bg-[var(--surface)] hover:text-[var(--brand)]"
+            aria-label={language === 'hu' ? 'Teljes menetrend' : 'Orar complet'}
+            title={language === 'hu' ? 'Teljes napi menetrend' : 'Orar complet zilnic'}
+          >
+            <CalendarDays className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedStopId(null)}
+            className="rounded-lg p-2 text-[var(--text-muted)] transition hover:bg-[var(--surface)] hover:text-[var(--text-h)]"
+            aria-label={language === 'hu' ? 'Bezárás' : 'Închide'}
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
       {/* ================================================== */}
@@ -94,13 +100,13 @@ export function StopCard({
         ) : (
           <ul className="space-y-3">
             {upcomingByLine.map(
-              ({ line, schedule, upcoming }) => {
+              ({ line, schedule, upcoming }, idx) => {
                 const direction =
                   schedule.direction?.[language];
 
                 return (
                   <li
-                    key={`${line.id}-${schedule.direction?.hu ?? 'default'}`}
+                    key={`${line.id}-${schedule.direction?.hu ?? 'default'}-${idx}`}
                     className="rounded-xl bg-[var(--surface)] p-3 ring-1 ring-[var(--border)]"
                   >
                     {/* ====================================== */}

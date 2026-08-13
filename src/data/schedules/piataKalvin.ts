@@ -51,7 +51,7 @@ export const piataKalvinSchedules: Schedule[] = [
   {
     stopId: 'piata-kalvin',
     lineId: 'line-2d',
-    direction: { hu: 'Szépmező', ro: 'Câmpul Frumos' },
+    direction: { hu: 'Bartók Béla utca', ro: 'Str. Bartók Béla' },
     times: ['04:54','05:54','06:09','06:24','06:39','06:54','07:09','13:09','13:25','13:39'],
     weekendTimes: ['04:54','05:25','13:54'],
   },

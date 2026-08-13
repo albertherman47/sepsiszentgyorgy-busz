@@ -43,6 +43,7 @@ import { cartCiuculuiSchedules } from './schedules/cartCiucului';
 import { cartKossuthLajosSchedules } from './schedules/cartKossuthLajos';
 import { casaCuArcadeSchedules } from './schedules/casaCuArcade';
 import { fabricaDeTigareteSchedules } from './schedules/fabricaDeTigarete';
+import { strSporturilorSchedules } from './schedules/strSporturilor';
 import { fabricaDeLapteSchedules } from './schedules/fabricaDeLapte';
 import { debrenSchedules } from './schedules/debren';
 import { fantanaHonvedSchedules } from './schedules/fantanaHonved';
@@ -66,6 +67,18 @@ import { strDealuluiSchedules } from './schedules/strDealului';
 import { strConstructorilor3Schedules } from './schedules/strConstructorilor3';
 import { strConstructorilor2Schedules } from './schedules/strConstructorilor2';
 import { strConstructorilor1Schedules } from './schedules/strConstructorilor1';
+import { strJozsefAttila1Schedules } from './schedules/strJozsefAttila1';
+import { strJozsefAttila2Schedules } from './schedules/strJozsefAttila2';
+import { strKosKarolySchedules } from './schedules/strKosKaroly';
+import { strLacramioarei1Schedules } from './schedules/strLacramioarei1';
+import { strLacramioarei2Schedules } from './schedules/strLacramioarei2';
+import { strTigaretei1Schedules } from './schedules/strTigaretei1';
+import { strTigaretei2Schedules } from './schedules/strTigaretei2';
+import { strTigaretei3Schedules } from './schedules/strTigaretei3';
+import { strVanatorilor1Schedules } from './schedules/strVanatorilor1';
+import { strVanatorilor2Schedules } from './schedules/strVanatorilor2';
+import { sugasBaiSchedules } from './schedules/sugasBai';
+import { tribunalSchedules } from './schedules/tribunal';
 export const CITY_CENTER = {
   lat: 45.8636,
   lng: 25.7877,
@@ -156,6 +169,7 @@ export const lines: Line[] = registeredLines.map(
 //
 
 export const schedules: Schedule[] = [
+  ...strSporturilorSchedules,
   ...strDozsaGyorgySchedules,
   ...strFabricii1Schedules,
   ...strFabricii2Schedules,
@@ -208,6 +222,18 @@ export const schedules: Schedule[] = [
   ...spitalulJudeteanSchedules,
   ...strBartokBelaSchedules,
   ...strBorvizSchedules,
+  ...strJozsefAttila1Schedules,
+  ...strJozsefAttila2Schedules,
+  ...strKosKarolySchedules,
+  ...strLacramioarei1Schedules,
+  ...strLacramioarei2Schedules,
+  ...strTigaretei1Schedules,
+  ...strTigaretei2Schedules,
+  ...strTigaretei3Schedules,
+  ...strVanatorilor1Schedules,
+  ...strVanatorilor2Schedules,
+  ...sugasBaiSchedules,
+  ...tribunalSchedules,
 ];
 
 // ============================================================

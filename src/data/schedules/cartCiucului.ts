@@ -58,13 +58,13 @@ export const cartCiuculuiSchedules: Schedule[] = [
         ],
     },
 
-    // 2D → Câmpul Frumos / Szépmező
+    // 2D → Str. Bartók Béla / Bartók Béla utca
     {
         stopId: 'cart-ciucului',
         lineId: 'line-2d',
         direction: {
-            hu: 'Szépmező',
-            ro: 'Câmpul Frumos',
+            hu: 'Bartók Béla utca',
+            ro: 'Str. Bartók Béla',
         },
         times: [
             '04:53', '05:53',

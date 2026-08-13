@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ChevronUp } from 'lucide-react';
 import { MapView } from './components/Map';
 import { Sidebar } from './components/Sidebar';
+import { FullScheduleModal } from './components/FullScheduleModal';
 import { useAppStore } from './store/useAppStore';
 import { useBusData } from './hooks/useBusData';
 
@@ -39,6 +40,7 @@ export default function App() {
         <main className="relative min-h-0 min-w-0 flex-1">
           <MapView />
         </main>
+        <FullScheduleModal />
       </div>
     );
   }
@@ -84,6 +86,7 @@ export default function App() {
           <Sidebar mode="mobile" />
         </div>
       </div>
+      <FullScheduleModal />
     </div>
   );
 }

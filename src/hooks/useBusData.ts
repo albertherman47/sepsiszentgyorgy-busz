@@ -102,6 +102,7 @@ export function useBusData() {
     now,
     lines,
     stops,
+    schedules,
     filteredStops,
     selectedStop,
     selectedLine,

@@ -1,8 +1,9 @@
-import { Bus, LocateFixed, MapPin, Search } from 'lucide-react';
+import { Bus, LocateFixed, MapPin, Navigation, Search } from 'lucide-react';
 import { Header } from './Header';
 import { LineFilter } from './LineFilter';
 import { LineList } from './LineList';
 import { StopCard } from './StopCard';
+import { TripPlanner } from './TripPlanner';
 import { useBusData } from '../hooks/useBusData';
 import { useAppStore } from '../store/useAppStore';
 
@@ -32,6 +33,7 @@ export function Sidebar({ mode = 'desktop' }: SidebarProps) {
       ? {
           tabStops: 'Megállók',
           tabLines: 'Buszjáratok',
+          tabPlanner: 'Tervezés',
           searchStops: 'Megálló keresése…',
           searchLines: 'Járat keresése (pl. 1, 2, Simeria)…',
           all: 'Összes',
@@ -42,6 +44,7 @@ export function Sidebar({ mode = 'desktop' }: SidebarProps) {
       : {
           tabStops: 'Stații',
           tabLines: 'Linii autobuz',
+          tabPlanner: 'Traseu',
           searchStops: 'Caută stație…',
           searchLines: 'Caută linie (ex. 1, 2, Simeria)…',
           all: 'Toate',
@@ -85,7 +88,7 @@ export function Sidebar({ mode = 'desktop' }: SidebarProps) {
         <button
           type="button"
           onClick={() => setActiveTab('stops')}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2 text-xs font-bold transition-all ${
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all ${
             activeTab === 'stops'
               ? 'bg-[var(--panel)] text-[var(--brand)] shadow-sm ring-1 ring-[var(--border)]'
               : 'text-[var(--text-muted)] hover:text-[var(--text-h)]'
@@ -98,7 +101,7 @@ export function Sidebar({ mode = 'desktop' }: SidebarProps) {
         <button
           type="button"
           onClick={() => setActiveTab('lines')}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2 text-xs font-bold transition-all ${
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all ${
             activeTab === 'lines'
               ? 'bg-[var(--panel)] text-[var(--brand)] shadow-sm ring-1 ring-[var(--border)]'
               : 'text-[var(--text-muted)] hover:text-[var(--text-h)]'
@@ -107,46 +110,63 @@ export function Sidebar({ mode = 'desktop' }: SidebarProps) {
           <Bus className="h-3.5 w-3.5" aria-hidden />
           {t.tabLines}
         </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('planner')}
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all ${
+            activeTab === 'planner'
+              ? 'bg-[var(--panel)] text-[var(--brand)] shadow-sm ring-1 ring-[var(--border)]'
+              : 'text-[var(--text-muted)] hover:text-[var(--text-h)]'
+          }`}
+        >
+          <Navigation className="h-3.5 w-3.5" aria-hidden />
+          {t.tabPlanner}
+        </button>
       </div>
 
-      {/* Search & controls bar */}
-      <div className="space-y-3 border-b border-[var(--border)] px-4 py-3">
-        <div className="relative">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]"
-            aria-hidden
-          />
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={activeTab === 'stops' ? t.searchStops : t.searchLines}
-            className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] py-2.5 pl-10 pr-3 text-sm text-[var(--text-h)] placeholder:text-[var(--text-muted)] outline-none transition focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20"
-          />
+      {/* Search & controls bar (only for stops & lines tabs) */}
+      {activeTab !== 'planner' && (
+        <div className="space-y-3 border-b border-[var(--border)] px-4 py-3">
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]"
+              aria-hidden
+            />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={activeTab === 'stops' ? t.searchStops : t.searchLines}
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] py-2.5 pl-10 pr-3 text-sm text-[var(--text-h)] placeholder:text-[var(--text-muted)] outline-none transition focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20"
+            />
+          </div>
+
+          {activeTab === 'stops' && (
+            <>
+              <LineFilter lines={lines} allLabel={t.all} />
+              <button
+                type="button"
+                onClick={handleLocate}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm font-medium text-[var(--text-h)] transition hover:border-[var(--brand)] hover:text-[var(--brand)]"
+              >
+                <LocateFixed className="h-4 w-4" aria-hidden />
+                {t.locate}
+              </button>
+            </>
+          )}
         </div>
-
-        {activeTab === 'stops' && (
-          <>
-            <LineFilter lines={lines} allLabel={t.all} />
-            <button
-              type="button"
-              onClick={handleLocate}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm font-medium text-[var(--text-h)] transition hover:border-[var(--brand)] hover:text-[var(--brand)]"
-            >
-              <LocateFixed className="h-4 w-4" aria-hidden />
-              {t.locate}
-            </button>
-          </>
-        )}
-      </div>
+      )}
 
       {/* Main content area depending on active tab */}
       <div
         className={`min-h-0 flex-1 overflow-y-auto ${
-          mode === 'mobile' && selectedStop ? 'hidden' : ''
+          mode === 'mobile' && selectedStop && activeTab !== 'planner' ? 'hidden' : ''
         }`}
       >
-        {activeTab === 'lines' ? (
+        {activeTab === 'planner' ? (
+          <TripPlanner />
+        ) : activeTab === 'lines' ? (
           <LineList />
         ) : (
           <>
@@ -192,8 +212,8 @@ export function Sidebar({ mode = 'desktop' }: SidebarProps) {
         )}
       </div>
 
-      {/* Desktop: always show stop card area; mobile: when stop selected */}
-      {(mode === 'desktop' || selectedStop) && (
+      {/* Desktop: show stop card area for stops/lines tabs */}
+      {activeTab !== 'planner' && (mode === 'desktop' || selectedStop) && (
         <div
           className={`shrink-0 border-t border-[var(--border)] bg-[var(--panel)] ${
             mode === 'desktop' ? 'h-[42%]' : ''
@@ -205,4 +225,3 @@ export function Sidebar({ mode = 'desktop' }: SidebarProps) {
     </aside>
   );
 }
-

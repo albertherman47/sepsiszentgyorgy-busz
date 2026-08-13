@@ -3,7 +3,7 @@ import type { Schedule } from '../../types/bus';
 export const fantanaHonvedSchedules: Schedule[] = [
   {
     stopId: 'fantana-honved',
-    lineId: '9',
+    lineId: 'line-9',
     direction: {
       hu: 'Vasútállomás',
       ro: 'Gara',
@@ -23,7 +23,7 @@ export const fantanaHonvedSchedules: Schedule[] = [
   },
   {
     stopId: 'fantana-honved',
-    lineId: '9',
+    lineId: 'line-9',
     direction: {
       hu: 'Sugásfürdő',
       ro: 'Șugaș Băi',

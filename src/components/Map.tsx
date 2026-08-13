@@ -293,6 +293,131 @@ export function MapView() {
   // ---------------------------------------------------------------------------
   // 4. KAMERA IGAZÍTÁSA A KIVÁLASZTOTT JÁRATRA
   // ---------------------------------------------------------------------------
+  const selectedTripOption = useAppStore((s) => s.selectedTripOption);
+
+  useEffect(() => {
+    const map = mapRef.current;
+
+    const TRIP_SOURCE = 'trip-route-source';
+    const TRIP_LAYER = 'trip-route-layer';
+    const TRIP_STOP_SOURCE = 'trip-stops-source';
+    const TRIP_STOP_LAYER = 'trip-stops-layer';
+
+    const removeTripLayers = () => {
+      if (map?.getLayer(TRIP_LAYER)) map.removeLayer(TRIP_LAYER);
+      if (map?.getSource(TRIP_SOURCE)) map.removeSource(TRIP_SOURCE);
+      if (map?.getLayer(TRIP_STOP_LAYER)) map.removeLayer(TRIP_STOP_LAYER);
+      if (map?.getSource(TRIP_STOP_SOURCE)) map.removeSource(TRIP_STOP_SOURCE);
+    };
+
+    if (!map || !selectedTripOption) {
+      removeTripLayers();
+      return;
+    }
+
+    const firstSeg = selectedTripOption.segments[0];
+    const lastSeg =
+      selectedTripOption.segments[selectedTripOption.segments.length - 1];
+
+    if (!firstSeg || !lastSeg) return;
+
+    // Fit camera to all stops in the trip
+    const bounds = new LngLatBounds(
+      [firstSeg.fromStop.lng, firstSeg.fromStop.lat],
+      [lastSeg.toStop.lng, lastSeg.toStop.lat],
+    );
+
+    if (selectedTripOption.transferStop) {
+      bounds.extend([
+        selectedTripOption.transferStop.lng,
+        selectedTripOption.transferStop.lat,
+      ]);
+    }
+
+    map.fitBounds(bounds, {
+      padding: { top: 100, bottom: 100, left: 80, right: 80 },
+      maxZoom: 15,
+      duration: 800,
+    });
+
+    // Build the coordinate chain: origin -> (transfer?) -> destination
+    const keyStops = selectedTripOption.segments.flatMap((seg, i) =>
+      i === 0
+        ? [[seg.fromStop.lng, seg.fromStop.lat], [seg.toStop.lng, seg.toStop.lat]]
+        : [[seg.toStop.lng, seg.toStop.lat]],
+    );
+
+    // Circle features for each key stop
+    const stopFeatures = [
+      firstSeg.fromStop,
+      ...(selectedTripOption.transferStop ? [selectedTripOption.transferStop] : []),
+      lastSeg.toStop,
+    ].map((stop, idx) => ({
+      type: 'Feature' as const,
+      geometry: { type: 'Point' as const, coordinates: [stop.lng, stop.lat] },
+      properties: {
+        label: idx === 0 ? 'A' : idx === (selectedTripOption.transferStop ? 2 : 1) ? 'B' : 'T',
+        color: idx === 0 ? '#22c55e' : idx === (selectedTripOption.transferStop ? 2 : 1) ? '#ef4444' : '#f59e0b',
+      },
+    }));
+
+    const draw = () => {
+      removeTripLayers();
+
+      // Dashed animated trip route line
+      map.addSource(TRIP_SOURCE, {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          geometry: { type: 'LineString', coordinates: keyStops },
+          properties: {},
+        },
+      });
+
+      map.addLayer({
+        id: TRIP_LAYER,
+        type: 'line',
+        source: TRIP_SOURCE,
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': '#6366f1',
+          'line-width': 5,
+          'line-opacity': 0.92,
+          'line-dasharray': [2, 1.5],
+        },
+      });
+
+      // Stop circles
+      map.addSource(TRIP_STOP_SOURCE, {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: stopFeatures },
+      });
+
+      map.addLayer({
+        id: TRIP_STOP_LAYER,
+        type: 'circle',
+        source: TRIP_STOP_SOURCE,
+        paint: {
+          'circle-radius': 10,
+          'circle-color': ['get', 'color'],
+          'circle-stroke-width': 3,
+          'circle-stroke-color': '#fff',
+          'circle-opacity': 1,
+        },
+      });
+    };
+
+    if (map.isStyleLoaded()) {
+      draw();
+    } else {
+      map.once('load', draw);
+    }
+
+    return () => {
+      removeTripLayers();
+    };
+  }, [selectedTripOption]);
+
   useEffect(() => {
     const map = mapRef.current;
 

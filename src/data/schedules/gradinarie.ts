@@ -3,7 +3,7 @@ import type { Schedule } from '../../types/bus';
 export const gradinarieSchedules: Schedule[] = [
   {
     stopId: 'gradinarie',
-    lineId: '10',
+    lineId: 'line-10',
     direction: {
       hu: 'Lábasház',
       ro: 'Casa cu Arcade',
@@ -33,7 +33,7 @@ export const gradinarieSchedules: Schedule[] = [
 
   {
     stopId: 'gradinarie',
-    lineId: '10',
+    lineId: 'line-10',
     direction: {
       hu: 'Árkos',
       ro: 'Arcuș',

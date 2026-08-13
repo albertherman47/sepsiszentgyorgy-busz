@@ -1,8 +1,11 @@
 import type { DepartureCountdown, Line, Schedule } from '../types/bus';
 
-/** Parse "HH:MM" into hours and minutes */
+/** Parse "HH:MM" into hours and minutes, normalizing 24:xx to 00:xx */
 export function parseTimeLabel(time: string): { hours: number; minutes: number } {
-  const [h, m] = time.split(':').map(Number);
+  let [h, m] = time.split(':').map(Number);
+  if (isNaN(h)) h = 0;
+  if (isNaN(m)) m = 0;
+  if (h >= 24) h = h % 24;
   return { hours: h, minutes: m };
 }
 

@@ -122,7 +122,7 @@ export const bisericaReformataSchedules: Schedule[] = [
             '18:42',
             '20:12',
             '22:12',
-            '24:10',
+            '00:10',
         ],
         weekendTimes: [
             '05:57',

@@ -59,7 +59,7 @@ export const fabricaDeTigareteSchedules: Schedule[] = [
     times: [
       '05:04','06:04','07:04','08:04','08:34',
       '10:34','11:34','13:34','14:34','15:34',
-      '16:34','17:34','18:34','20:04','22:04','24:07',
+      '16:34','17:34','18:34','20:04','22:04','00:07',
     ],
     weekendTimes: [
       '05:49','07:49','09:49','11:49','13:49',
@@ -125,8 +125,8 @@ export const fabricaDeTigareteSchedules: Schedule[] = [
     stopId: 'fabrica-de-tigarete',
     lineId: 'line-7',
     direction: {
-      hu: 'Szemerja (Gólya utca)',
-      ro: 'Simeria (Str. Berzei)',
+      hu: 'Vasútállomás',
+      ro: 'Gara',
     },
     times: [
       '07:16','07:46','08:16','08:46','09:16','09:46',

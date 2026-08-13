@@ -53,14 +53,14 @@ export const strSporturilorSchedules: Schedule[] = [
   {
     stopId: 'str-sporturilor',
     lineId: 'line-1d',
-    direction: { hu: 'Szépmező', ro: 'Câmpul Frumos' },
+    direction: { hu: 'Szemerja (Gólya utca)', ro: 'Simeria (Str. Berzei)' },
     times: ['04:11','04:36','05:01','06:11','06:41','12:52','13:52','14:52'],
     weekendTimes: ['04:11','05:01','07:11','07:41','13:24','15:54'],
   },
   {
     stopId: 'str-sporturilor',
     lineId: 'line-2d',
-    direction: { hu: 'Szépmező', ro: 'Câmpul Frumos' },
+    direction: { hu: 'Bartók Béla utca', ro: 'Str. Bartók Béla' },
     times: ['04:47','05:47','06:02','06:17','06:32','06:47','07:02','13:02','13:18','13:32'],
     weekendTimes: ['04:47','05:18','13:47'],
   },

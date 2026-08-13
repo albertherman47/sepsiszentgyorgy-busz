@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import type { Language, SelectedLineId, SelectedStopId } from '../types/bus';
+import type { Language, SelectedLineId, SelectedStopId, TripOption } from '../types/bus';
 
-export type ActiveTab = 'stops' | 'lines';
+export type ActiveTab = 'stops' | 'lines' | 'planner';
 
 interface AppState {
   language: Language;
@@ -12,6 +12,14 @@ interface AppState {
   userLocation: { lat: number; lng: number } | null;
   activeTab: ActiveTab;
 
+  // Trip planner state
+  plannerOriginStopId: string | null;
+  plannerDestinationStopId: string | null;
+  selectedTripOption: TripOption | null;
+
+  // Full schedule modal state
+  fullScheduleStopId: string | null;
+
   setLanguage: (language: Language) => void;
   toggleLanguage: () => void;
   setSelectedLineId: (id: SelectedLineId) => void;
@@ -20,6 +28,12 @@ interface AppState {
   requestFlyToStop: (id: string | null) => void;
   setUserLocation: (loc: { lat: number; lng: number } | null) => void;
   setActiveTab: (tab: ActiveTab) => void;
+
+  setPlannerOriginStopId: (id: string | null) => void;
+  setPlannerDestinationStopId: (id: string | null) => void;
+  setSelectedTripOption: (option: TripOption | null) => void;
+  swapPlannerStops: () => void;
+  setFullScheduleStopId: (id: string | null) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -31,6 +45,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   userLocation: null,
   activeTab: 'stops',
 
+  plannerOriginStopId: null,
+  plannerDestinationStopId: null,
+  selectedTripOption: null,
+  fullScheduleStopId: null,
+
   setLanguage: (language) => set({ language }),
   toggleLanguage: () =>
     set({ language: get().language === 'hu' ? 'ro' : 'hu' }),
@@ -40,5 +59,16 @@ export const useAppStore = create<AppState>((set, get) => ({
   requestFlyToStop: (id) => set({ flyToStopId: id }),
   setUserLocation: (loc) => set({ userLocation: loc }),
   setActiveTab: (tab) => set({ activeTab: tab }),
-}));
 
+  setPlannerOriginStopId: (id) => set({ plannerOriginStopId: id }),
+  setPlannerDestinationStopId: (id) => set({ plannerDestinationStopId: id }),
+  setSelectedTripOption: (option) => set({ selectedTripOption: option }),
+  swapPlannerStops: () => {
+    const { plannerOriginStopId, plannerDestinationStopId } = get();
+    set({
+      plannerOriginStopId: plannerDestinationStopId,
+      plannerDestinationStopId: plannerOriginStopId,
+    });
+  },
+  setFullScheduleStopId: (id) => set({ fullScheduleStopId: id }),
+}));

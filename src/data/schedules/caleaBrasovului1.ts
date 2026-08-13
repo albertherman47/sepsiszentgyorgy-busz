@@ -146,7 +146,7 @@ export const caleaBrasovului1Schedules: Schedule[] = [
             '18:47',
             '20:17',
             '22:17',
-            '24:17',
+            '00:17',
         ],
         weekendTimes: [
             '06:02',

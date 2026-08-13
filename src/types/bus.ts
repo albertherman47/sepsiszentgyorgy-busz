@@ -49,3 +49,27 @@ export interface DepartureCountdown {
 export type SelectedLineId = string | null;
 
 export type SelectedStopId = string | null;
+
+export interface TripSegment {
+  line: Line;
+  fromStop: Stop;
+  toStop: Stop;
+  departureTimeLabel: string;
+  departureAt: Date;
+  arrivalTimeLabel: string;
+  arrivalAt: Date;
+  durationMinutes: number;
+  minutesUntilDeparture: number;
+  schedule: Schedule;
+}
+
+export interface TripOption {
+  id: string;
+  isDirect: boolean;
+  segments: TripSegment[];
+  transferStop?: Stop;
+  transferWaitMinutes?: number;
+  totalDurationMinutes: number;
+  firstDepartureAt: Date;
+  minutesUntilFirstDeparture: number;
+}

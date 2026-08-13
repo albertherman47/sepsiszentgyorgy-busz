@@ -25,7 +25,7 @@ export const strCiucului1Schedules: Schedule[] = [
   {
     stopId: 'str-ciucului-1',
     lineId: 'line-2d',
-    direction: { hu: 'Szépmező', ro: 'Câmpul Frumos' },
+    direction: { hu: 'Bartók Béla utca', ro: 'Str. Bartók Béla' },
     times: ['04:51','05:51','06:06','06:21','06:36','06:51','07:06','13:06','13:22','13:36'],
     weekendTimes: ['04:51','05:22','13:51'],
   },

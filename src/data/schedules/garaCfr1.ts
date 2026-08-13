@@ -3,7 +3,7 @@ import type { Schedule } from '../../types/bus';
 export const garaCfr1Schedules: Schedule[] = [
   {
     stopId: 'gara-cfr-1',
-    lineId: '1',
+    lineId: 'line-1',
     direction: {
       hu: 'Szemerja (Gólya utca)',
       ro: 'Simeria (Str. Berzei)',
@@ -54,7 +54,7 @@ export const garaCfr1Schedules: Schedule[] = [
 
   {
     stopId: 'gara-cfr-1',
-    lineId: '2',
+    lineId: 'line-2',
     direction: {
       hu: 'Bartók Béla utca',
       ro: 'Str. Bartók Béla',
@@ -104,7 +104,7 @@ export const garaCfr1Schedules: Schedule[] = [
 
   {
     stopId: 'gara-cfr-1',
-    lineId: '3',
+    lineId: 'line-3',
     direction: {
       hu: 'Gyár utca',
       ro: 'Str. Fabricii',
@@ -140,7 +140,7 @@ export const garaCfr1Schedules: Schedule[] = [
 
   {
     stopId: 'gara-cfr-1',
-    lineId: '4',
+    lineId: 'line-4',
     direction: {
       hu: 'Gyár utca',
       ro: 'Str. Fabricii',
@@ -176,7 +176,7 @@ export const garaCfr1Schedules: Schedule[] = [
 
   {
     stopId: 'gara-cfr-1',
-    lineId: '5',
+    lineId: 'line-5',
     direction: {
       hu: 'József Attila utca',
       ro: 'Str. József Attila',
@@ -223,7 +223,7 @@ export const garaCfr1Schedules: Schedule[] = [
 
   {
     stopId: 'gara-cfr-1',
-    lineId: '7',
+    lineId: 'line-7',
     direction: {
       hu: 'Szemerja (Gólya utca)',
       ro: 'Simeria (Str. Berzei)',
@@ -262,7 +262,7 @@ export const garaCfr1Schedules: Schedule[] = [
 
   {
     stopId: 'gara-cfr-1',
-    lineId: '1D',
+    lineId: 'line-1d',
     direction: {
       hu: 'Szépmező',
       ro: 'Câmpul Frumos',
@@ -284,7 +284,7 @@ export const garaCfr1Schedules: Schedule[] = [
 
   {
     stopId: 'gara-cfr-1',
-    lineId: '2D',
+    lineId: 'line-2d',
     direction: {
       hu: 'Szépmező',
       ro: 'Câmpul Frumos',
@@ -305,7 +305,7 @@ export const garaCfr1Schedules: Schedule[] = [
 
   {
     stopId: 'gara-cfr-1',
-    lineId: '5D',
+    lineId: 'line-5d',
     direction: {
       hu: 'Szépmező',
       ro: 'Câmpul Frumos',
@@ -318,6 +318,27 @@ export const garaCfr1Schedules: Schedule[] = [
     weekendTimes: [
       '05:47',
       '13:47',
+    ],
+  },
+
+  {
+    stopId: 'gara-cfr-1',
+    lineId: 'line-9',
+    direction: {
+      hu: 'Sugásfürdő',
+      ro: 'Șugaș Băi',
+    },
+    times: [
+      '10:00',
+      '13:00',
+      '16:00',
+      '19:00',
+    ],
+    weekendTimes: [
+      '10:00',
+      '13:00',
+      '16:00',
+      '19:00',
     ],
   },
 ];

@@ -67,8 +67,8 @@ export const debrenSchedules: Schedule[] = [
     stopId: 'debren',
     lineId: 'line-2d',
     direction: {
-      hu: 'Szépmező',
-      ro: 'Câmpul Frumos',
+      hu: 'Bartók Béla utca',
+      ro: 'Str. Bartók Béla',
     },
     times: [
       '04:50','05:50',

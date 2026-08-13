@@ -67,7 +67,7 @@ export const strDealuluiSchedules: Schedule[] = [
   {
     stopId: 'str-dealului',
     lineId: 'line-1d',
-    direction: { hu: 'Szépmező', ro: 'Câmpul Frumos' },
+    direction: { hu: 'Szemerja (Gólya utca)', ro: 'Simeria (Str. Berzei)' },
     times: ['04:20','04:45','05:10','06:20','06:50','13:01','14:01','15:01'],
     weekendTimes: ['04:20','05:10','07:20','07:50','13:33','16:03'],
   },
@@ -81,7 +81,7 @@ export const strDealuluiSchedules: Schedule[] = [
   {
     stopId: 'str-dealului',
     lineId: 'line-2d',
-    direction: { hu: 'Szépmező', ro: 'Câmpul Frumos' },
+    direction: { hu: 'Bartók Béla utca', ro: 'Str. Bartók Béla' },
     times: ['04:59','05:59','06:14','06:29','06:44','06:59','07:14','13:14','13:30','13:44'],
     weekendTimes: ['04:59','05:30','13:59'],
   },

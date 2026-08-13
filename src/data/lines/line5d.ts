@@ -1,0 +1,21 @@
+export const line5DData = {
+  id: 'line-5d',
+  number: '5D',
+  name_hu: 'Multi-Trans – Vasútállomás',
+  name_ro: 'Multi-Trans – Gara CFR',
+  color: '#e76f51',
+  stopIds: [
+    'multi-trans',
+    'campul-frumos',
+    'autoliv',
+    'gara-cfr-1',
+    'str-lacramioarei-1',
+    'bdul-n-iorga-1',
+    'bdul-n-iorga-2',
+    'bdul-g-balan-1',
+    'bdul-g-balan-2',
+    'str-lacramioarei-2',
+    'str-lacramioarei-1',
+    'gara-cfr-1',
+  ],
+};

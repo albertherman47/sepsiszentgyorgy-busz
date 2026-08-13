@@ -1,0 +1,28 @@
+export const line2DData = {
+  id: 'line-2d',
+  number: '2D',
+  name_hu: 'Szépmező – Bartók Béla utca',
+  name_ro: 'Câmpul Frumos – Str. Bartók Béla',
+  color: '#0077b6',
+  stopIds: [
+    'campul-frumos',
+    'autoliv',
+    'gara-cfr-1',
+    'str-sporturilor',
+    'debren',
+    'str-ciucului-1',
+    'str-ciucului-2',
+    'cart-ciucului',
+    'piata-kalvin',
+    'liceul-de-arta-plugor-sandor',
+    'str-gabor-aron',
+    'institutul-de-proiectari',
+    'str-dealului',
+    'spitalul-judetean',
+    'str-vanatorilor-1',
+    'str-vanatorilor-2',
+    'str-ghioceilor',
+    'str-bartok-bela',
+
+  ],
+};

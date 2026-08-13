@@ -1,0 +1,68 @@
+# CONTEXT & PROJECT GOAL
+Building a modern, highly usable, responsive web application for the public transit system of Sepsiszentgyörgy (Sfântu Gheorghe, Romania).
+Due to recent bus route changes, passengers struggle to navigate the system. This app solves this with an interactive map, route visualization, bilingual support (HU/RO), and real-time departure countdowns.
+
+---
+
+## TECH STACK & LIBRARIES
+- **Framework:** React 19 + Vite (TypeScript)
+- **Styling:** Tailwind CSS (Modern, mobile-first, clean UI)
+- **Map:** MapLibre GL JS / Mapbox GL JS
+- **Icons:** `lucide-react`
+- **State Management:** Zustand (or React Context)
+- **Types:** Full TypeScript coverage (Strict Mode)
+
+---
+
+## ARCHITECTURE & FILE STRUCTURE
+Create the project adhering to this exact structure: src/
+├── assets/
+├── components/
+│   ├── Map.tsx           # MapLibre container, markers, route polylines
+│   ├── Sidebar.tsx       # Search bar, Line filters, Language switcher
+│   ├── StopCard.tsx      # Drawer/Modal for stop departures + countdowns
+│   ├── LineFilter.tsx    # Line selector chips
+│   └── Header.tsx        # Top navigation / branding
+├── data/
+│   └── busData.ts        # Mock GTFS data for Sepsiszentgyörgy (Stops, Lines, Schedules)
+├── hooks/
+│   └── useBusData.ts     # Data fetching and schedule calculation hooks
+├── types/
+│   └── bus.ts            # TypeScript interfaces (Stop, Line, Schedule)
+├── utils/
+│   └── timeUtils.ts      # Departure countdown calculation logic
+├── App.tsx               # Main layout (Split screen desktop / Bottom sheet mobile)
+└── main.tsx
+---
+
+## RULES FOR CODE GENERATION
+
+### 1. Data Structure (`src/types/bus.ts` & `src/data/busData.ts`)
+- Use real coordinates around Sepsiszentgyörgy (~45.86° N, 25.78° E).
+- Include lines (e.g., Line 1: Gara CFR – Simeria, Line 3, Line 5).
+- Support dual language stop names (`name_hu` and `name_ro`).
+
+### 2. Map Component (`src/components/Map.tsx`)
+- Render bus stops as interactive custom DOM markers.
+- Render bus routes as colored GeoJSON polylines.
+- When a user selects a line from the filter, highlight its polyline and fade out/hide others.
+- Center/fly-to location when a stop or user location is clicked.
+
+### 3. UI/UX Standards
+- **Mobile-First:** Use a collapsible bottom-sheet for mobile layout over the map.
+- **Desktop:** Use a 400px fixed sidebar on the left and fullscreen map on the right.
+- **Bilingual Support:** Language state (`hu` / `ro`) affecting UI labels and stop names.
+
+---
+
+## EXECUTION STEPS
+
+Please complete the setup by generating code step-by-step:
+
+**STEP 1:** Create `src/types/bus.ts` with complete TypeScript definitions for `Stop`, `Line`, `Schedule`, and `Language`.
+**STEP 2:** Create `src/data/busData.ts` with realistic mock data for Sepsiszentgyörgy.
+**STEP 3:** Create `src/utils/timeUtils.ts` for calculating "X min until arrival" from schedule arrays.
+**STEP 4:** Create `src/components/Map.tsx`, `src/components/Sidebar.tsx`, and `src/components/StopCard.tsx`.
+**STEP 5:** Assemble everything in `src/App.tsx` with Tailwind CSS styling and clean responsiveness.
+
+Write production-grade, modular, fully typed TypeScript code without placeholders or omitted implementations.

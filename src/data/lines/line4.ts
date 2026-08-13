@@ -1,0 +1,31 @@
+import { line4RoadPath } from '../routes/line4';
+
+export const line4Data = {
+  id: 'line-4',
+  number: '4',
+  name_hu: 'Cigaretta utca – Szépmező',
+  name_ro: 'Str. Țigaretei – Câmpul Frumos',
+  color: '#e9c46a',
+  roadPath: line4RoadPath,
+  stopIds: [
+    'str-tigarete-1',
+    'str-tigarete-2',
+    'str-tigarete-3',
+    'comfort-residence',
+    'str-fabricii-1',
+    'str-fabricii-2',
+    'col-mihai-viteazul',
+    'casa-cu-arcade',
+    'parc-elisabeta',
+    'biserica-reformata',
+    'str-sporturilor',
+    'gara-cfr-1',
+    'calea-brasovului-1',
+    'terminal',
+    'str-constructorilor-1',
+    'str-constructorilor-2',
+    'str-constructorilor-3',
+    'campul-frumos',
+    'multi-trans',
+  ],
+};

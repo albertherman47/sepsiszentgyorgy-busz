@@ -17,11 +17,22 @@ export interface Line {
   name_hu: string;
   name_ro: string;
   color: string;
+
   stopIds: string[];
+
+  outboundStopIds?: string[];
+  returnStopIds?: string[];
+  directionStopIds?: Partial<Record<'outbound' | 'return', string[]>>;
 
   path: LngLat[];
 
   roadPath?: LngLat[];
+
+  paths?: LngLat[][];
+
+  directionPaths?: Partial<
+    Record<'outbound' | 'return', LngLat[][]>
+  >;
 }
 
 export interface Schedule {
@@ -54,6 +65,8 @@ export interface TripSegment {
   line: Line;
   fromStop: Stop;
   toStop: Stop;
+  /** Every actual stop used on this section, inclusive. */
+  viaStops: Stop[];
   departureTimeLabel: string;
   departureAt: Date;
   arrivalTimeLabel: string;
@@ -67,9 +80,16 @@ export interface TripOption {
   id: string;
   isDirect: boolean;
   segments: TripSegment[];
+  /** Compatibility summary for consumers that show the first transfer. */
   transferStop?: Stop;
   transferWaitMinutes?: number;
   totalDurationMinutes: number;
+  totalWaitingMinutes: number;
+  /** Extra penalty for impractically long waits, used for route ranking. */
+  longWaitPenaltyMinutes: number;
+  /** Multi-criteria ranking cost; lower is better. */
+  weightedCostMinutes: number;
+  transferCount: number;
   firstDepartureAt: Date;
   minutesUntilFirstDeparture: number;
 }

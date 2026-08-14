@@ -30,6 +30,12 @@ const defaultCoordinates: Record<string, StopCoordinate> = {
     'gara-cfr-2': { lat: 45.8552, lng: 25.7848 },
     'gradinarie': { lat: 45.8750, lng: 25.7910 },
     'institutul-de-proiectari': { lat: 45.8652, lng: 25.7874 },
+    'izvorul-sulfuros': {
+   
+    lat: 45.855392,
+    lng: 25.767252,
+},
+
     'liceul-de-arta-plugor-sandor': { lat: 45.8628, lng: 25.7895 },
     'liceul-m-viteazul': { lat: 45.8660, lng: 25.7850 },
     'motel-calypso': { lat: 45.8210, lng: 25.7950 },

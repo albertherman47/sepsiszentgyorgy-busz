@@ -125,6 +125,34 @@ export function MapView() {
 
   const setSelectedStopId = useAppStore((s) => s.setSelectedStopId);
   const setSelectedLineId = useAppStore((s) => s.setSelectedLineId);
+  const selectedDirection = useAppStore((s) => s.selectedLineDirection);
+  const setSelectedDirection = useAppStore((s) => s.setSelectedLineDirection);
+
+  useEffect(() => {
+  const map = mapRef.current;
+  if (!map || !map.getSource(ROUTES_SOURCE)) return;
+  const source = map.getSource(ROUTES_SOURCE) as any;
+
+  const activeLines = selectedLineId 
+    ? lines.filter((line) => line.id === selectedLineId)
+    : lines;
+
+  source.setData({
+    type: 'FeatureCollection',
+    features: activeLines.map((line) => {
+      const coordinates =
+        line.id === selectedLineId && line.directionPaths?.[selectedDirection]
+          ? line.directionPaths[selectedDirection]
+          : line.paths ?? [line.path];
+
+      return {
+        type: 'Feature',
+        properties: { id: line.id, color: line.color, number: line.number },
+        geometry: { type: 'MultiLineString', coordinates },
+      };
+    }),
+  });
+}, [selectedLineId, selectedDirection]);
 
   const flyToStopId = useAppStore((s) => s.flyToStopId);
   const requestFlyToStop = useAppStore((s) => s.requestFlyToStop);
@@ -159,24 +187,11 @@ export function MapView() {
     const addBusRoutesLayer = () => {
       if (map.getSource(ROUTES_SOURCE)) return;
 
-      const features = lines.map((line) => ({
-        type: 'Feature' as const,
-        properties: {
-          id: line.id,
-          color: line.color,
-          number: line.number,
-        },
-        geometry: {
-          type: 'LineString' as const,
-          coordinates: line.path,
-        },
-      }));
-
       map.addSource(ROUTES_SOURCE, {
         type: 'geojson',
         data: {
           type: 'FeatureCollection',
-          features,
+          features: [], // Induláskor teljesen üres
         },
       });
 
@@ -190,8 +205,8 @@ export function MapView() {
         },
         paint: {
           'line-color': ['get', 'color'],
-          'line-width': 4,
-          'line-opacity': 0.85,
+          'line-width': 6,
+          'line-opacity': 1,
         },
       });
     };
@@ -240,10 +255,8 @@ export function MapView() {
     const apply = () => {
       if (!map.getLayer(ROUTES_LAYER)) return;
 
-      // Mindig alapállapotból indulunk.
-      map.setFilter(ROUTES_LAYER, null);
-
       if (!selectedLineId) {
+        map.setFilter(ROUTES_LAYER, null);
         // Nincs kiválasztott járat:
         // minden járat látható.
         map.setPaintProperty(
@@ -259,26 +272,17 @@ export function MapView() {
         );
       } else {
         // Csak a kiválasztott járat legyen látható.
+        map.setFilter(ROUTES_LAYER, ['==', ['get', 'id'], selectedLineId]);
         map.setPaintProperty(
           ROUTES_LAYER,
           'line-opacity',
-          [
-            'case',
-            ['==', ['get', 'id'], selectedLineId],
-            1,
-            0,
-          ],
+          1,
         );
 
         map.setPaintProperty(
           ROUTES_LAYER,
           'line-width',
-          [
-            'case',
-            ['==', ['get', 'id'], selectedLineId],
-            6,
-            4,
-          ],
+          6,
         );
       }
     };
@@ -427,13 +431,15 @@ export function MapView() {
       (line) => line.id === selectedLineId,
     );
 
-    if (!activeLine || activeLine.path.length === 0) return;
+    const routeCoordinates = activeLine?.paths?.flat() ?? activeLine?.path ?? [];
 
-    const bounds = activeLine.path.reduce(
+    if (!activeLine || routeCoordinates.length === 0) return;
+
+    const bounds = routeCoordinates.reduce(
       (b, coord) => b.extend(coord as [number, number]),
       new LngLatBounds(
-        activeLine.path[0],
-        activeLine.path[0],
+        routeCoordinates[0],
+        routeCoordinates[0],
       ),
     );
 
@@ -532,7 +538,8 @@ export function MapView() {
       // tartozó megállók láthatók.
       const isVisible =
         selectedLineId === null ||
-        stop.lineIds.includes(selectedLineId);
+        stop.lineIds.includes(selectedLineId) &&
+        (selectedLineId !== 'line-5d' || (selectedLine?.directionStopIds?.[selectedDirection] ?? []).includes(stop.id));
 
       // ---------------------------------------------------------------
       // LÁTHATÓSÁG
@@ -573,6 +580,7 @@ export function MapView() {
     }
   }, [
     selectedLineId,
+    selectedDirection,
     selectedStop,
     language,
     stopName,
@@ -722,6 +730,12 @@ export function MapView() {
           >
             <X className="h-4 w-4" />
           </button>
+        </div>
+      )}
+      {selectedLine?.id === 'line-5d' && (
+        <div className="absolute left-4 top-[5.25rem] z-10 flex overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] p-1 shadow-lg">
+          <button type="button" onClick={() => setSelectedDirection('outbound')} className={`rounded-lg px-3 py-1.5 text-xs font-bold ${selectedDirection === 'outbound' ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-muted)]'}`}>Multi-Trans felé</button>
+          <button type="button" onClick={() => setSelectedDirection('return')} className={`rounded-lg px-3 py-1.5 text-xs font-bold ${selectedDirection === 'return' ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-muted)]'}`}>József Attila felé</button>
         </div>
       )}
     </div>

@@ -1,9 +1,12 @@
+import { line3RoadPaths } from '../routes/line3';
+
 export const line3Data = {
   id: 'line-3',
   number: '3',
   name_hu: 'Cigaretta utca – Szotyor',
   name_ro: 'Str. Țigaretei – Coșeni',
   color: '#2a9d8f',
+  roadPaths: line3RoadPaths,
   stopIds: [
     'str-tigarete-1',
     'str-tigarete-2',

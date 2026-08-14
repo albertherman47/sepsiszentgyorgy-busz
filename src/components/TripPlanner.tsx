@@ -7,6 +7,9 @@ import {
   Footprints,
   Search,
   Check,
+  Clock3,
+  Bus,
+  ChevronRight,
 } from 'lucide-react';
 import { useBusData } from '../hooks/useBusData';
 import { useAppStore } from '../store/useAppStore';
@@ -299,6 +302,24 @@ export function TripPlanner() {
     (s) => s.requestFlyToStop,
   );
 
+  const [useNow, setUseNow] = useState(true);
+  const [departureTime, setDepartureTime] = useState(() => {
+    const current = new Date();
+    return `${String(current.getHours()).padStart(2, '0')}:${String(current.getMinutes()).padStart(2, '0')}`;
+  });
+  const [planRequest, setPlanRequest] = useState<{
+    originStopId: string;
+    destinationStopId: string;
+    departureAfter: Date;
+    timeSelection: string;
+  } | null>(null);
+  const [isPlanning, setIsPlanning] = useState(false);
+  const planningTimer = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (planningTimer.current !== null) window.clearTimeout(planningTimer.current);
+  }, []);
+
   const t =
     language === 'hu'
       ? {
@@ -311,9 +332,22 @@ export function TripPlanner() {
         swap:
           'Indulás és érkezés felcserélése',
         direct: 'Közvetlen járat',
-        transfer: '1 átszállás',
+        transfer: 'átszállás',
         duration: 'menetidő',
-        waitAt: 'várakozás:',
+        waitAt: 'Várakozás',
+        now: 'Most',
+        departure: 'Indulás időpontja',
+        fastest: 'Leggyorsabb',
+        recommended: 'Ajánlott',
+        totalWait: 'össz. várakozás',
+        fewestTransfers: 'Legkevesebb átszállás',
+        leastWaiting: 'Legkevesebb várakozás',
+        departureAt: 'Indul',
+        arrivalAt: 'Érkezik',
+        stops: 'megálló',
+        plan: 'Útvonal tervezése',
+        planning: 'Útvonal keresése…',
+        pressPlan: 'Válaszd ki a megállókat, majd indítsd el a tervezést.',
         noRoutes:
           'Nincs elérhető útvonal a kiválasztott megállók között.',
         chooseStops:
@@ -331,9 +365,22 @@ export function TripPlanner() {
         swap:
           'Inversează plecarea și sosirea',
         direct: 'Cursă directă',
-        transfer: '1 schimbare',
+        transfer: 'schimbare',
         duration: 'durată',
-        waitAt: 'așteptare:',
+        waitAt: 'Așteptare',
+        now: 'Acum',
+        departure: 'Ora plecării',
+        fastest: 'Cea mai rapidă',
+        recommended: 'Recomandat',
+        totalWait: 'așteptare totală',
+        fewestTransfers: 'Cele mai puține schimbări',
+        leastWaiting: 'Cea mai mică așteptare',
+        departureAt: 'Plecare',
+        arrivalAt: 'Sosire',
+        stops: 'stații',
+        plan: 'Planifică ruta',
+        planning: 'Se caută ruta…',
+        pressPlan: 'Alege stațiile, apoi pornește planificarea.',
         noRoutes:
           'Nu există rute disponibile între stațiile selectate.',
         chooseStops:
@@ -388,30 +435,39 @@ export function TripPlanner() {
     );
   };
 
-  const tripOptions = useMemo(() => {
-    if (
-      !plannerOriginStopId ||
-      !plannerDestinationStopId
-    ) {
-      return [];
+  const handlePlan = () => {
+    if (!plannerOriginStopId || !plannerDestinationStopId || isPlanning) return;
+    const departureAfter = new Date(now);
+    if (!useNow && /^\d{2}:\d{2}$/.test(departureTime)) {
+      const [hours, minutes] = departureTime.split(':').map(Number);
+      departureAfter.setHours(hours, minutes, 0, 0);
     }
+    setIsPlanning(true);
+    if (planningTimer.current !== null) window.clearTimeout(planningTimer.current);
+    planningTimer.current = window.setTimeout(() => {
+      setPlanRequest({ originStopId: plannerOriginStopId, destinationStopId: plannerDestinationStopId, departureAfter, timeSelection: useNow ? 'now' : departureTime });
+      setIsPlanning(false);
+      planningTimer.current = null;
+    }, 550);
+  };
 
+  const tripOptions = useMemo(() => {
+    if (!planRequest) return [];
     return planTrip(
-      plannerOriginStopId,
-      plannerDestinationStopId,
-      now,
+      planRequest.originStopId,
+      planRequest.destinationStopId,
+      planRequest.departureAfter,
       schedules,
       lines,
       stops,
     );
   }, [
-    plannerOriginStopId,
-    plannerDestinationStopId,
-    now,
+    planRequest,
     schedules,
     lines,
     stops,
   ]);
+  const isCurrentPlan = Boolean(planRequest && planRequest.originStopId === plannerOriginStopId && planRequest.destinationStopId === plannerDestinationStopId && planRequest.timeSelection === (useNow ? 'now' : departureTime));
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -496,11 +552,45 @@ export function TripPlanner() {
           <LocateFixed className="h-3.5 w-3.5 text-[var(--brand)]" />
           {t.nearestStop}
         </button>
+
+        <div className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--panel)] p-1.5">
+          <Clock3 className="ml-1 h-4 w-4 shrink-0 text-[var(--brand)]" aria-hidden />
+          <span className="min-w-0 flex-1 text-xs font-semibold text-[var(--text-h)]">{t.departure}</span>
+          <button
+            type="button"
+            onClick={() => setUseNow(true)}
+            className={`rounded-lg px-2.5 py-1.5 text-xs font-bold transition ${useNow ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-muted)] hover:bg-[var(--surface)]'}`}
+          >
+            {t.now}
+          </button>
+          <input
+            type="time"
+            value={departureTime}
+            aria-label={t.departure}
+            onChange={(event) => { setDepartureTime(event.target.value); setUseNow(false); }}
+            className={`w-[86px] rounded-lg border border-[var(--border)] bg-[var(--surface)] px-1.5 py-1 text-xs font-bold outline-none focus:border-[var(--brand)] ${useNow ? 'text-[var(--text-muted)]' : 'text-[var(--text-h)]'}`}
+          />
+        </div>
+
+        <button
+          type="button"
+          onClick={handlePlan}
+          disabled={!plannerOriginStopId || !plannerDestinationStopId || isPlanning}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand)] px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45 active:scale-[0.98]"
+        >
+          <Navigation className={`h-4 w-4 ${isPlanning ? 'animate-pulse' : ''}`} />
+          {isPlanning ? t.planning : t.plan}
+        </button>
       </div>
 
       {/* RESULTS */}
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
-        {!plannerOriginStopId ||
+        {isPlanning ? (
+          <div className="route-planning-animation" role="status" aria-live="polite">
+            <div className="route-planning-track"><span className="route-planning-point">A</span><span className="route-planning-road" /><Bus className="route-planning-bus" aria-hidden /><span className="route-planning-point route-planning-end">B</span></div>
+            <p>{t.planning}</p>
+          </div>
+        ) : !plannerOriginStopId ||
           !plannerDestinationStopId ? (
           <div className="flex flex-col items-center justify-center gap-3 py-12 text-center text-[var(--text-muted)]">
             <Navigation className="h-10 w-10 opacity-30" />
@@ -508,6 +598,11 @@ export function TripPlanner() {
             <p className="max-w-[240px] text-xs leading-relaxed">
               {t.chooseStops}
             </p>
+          </div>
+        ) : !isCurrentPlan ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-12 text-center text-[var(--text-muted)]">
+            <Navigation className="h-10 w-10 opacity-30" />
+            <p className="max-w-[250px] text-xs leading-relaxed">{t.pressPlan}</p>
           </div>
         ) : tripOptions.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-10 text-center text-[var(--text-muted)]">
@@ -531,8 +626,10 @@ export function TripPlanner() {
                 selectedTripOption?.id === opt.id;
 
               const isDirect = opt.isDirect;
-              const firstSeg = opt.segments[0];
-              const secondSeg = opt.segments[1];
+              const isRecommended = opt.id === tripOptions[0]?.id;
+              const fastestDuration = Math.min(...tripOptions.map((option) => option.totalDurationMinutes));
+              const fewestTransfers = Math.min(...tripOptions.map((option) => option.transferCount));
+              const leastWaiting = Math.min(...tripOptions.map((option) => option.totalWaitingMinutes));
 
               return (
                 <div
@@ -546,22 +643,26 @@ export function TripPlanner() {
                     }`}
                 >
                   <div className="flex items-center justify-between gap-2 border-b border-[var(--border)]/60 pb-2.5">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${isDirect
                             ? 'bg-emerald-500/15 text-emerald-600'
                             : 'bg-amber-500/15 text-amber-600'
                           }`}
                       >
-                        {isDirect
-                          ? t.direct
-                          : t.transfer}
+                        {isDirect ? t.direct : `${opt.transferCount} ${t.transfer}`}
                       </span>
+
+                      {isRecommended && <span className="rounded-full bg-sky-500/15 px-2 py-0.5 text-[10px] font-bold text-sky-600">{t.recommended}</span>}
+                      {!isRecommended && opt.totalDurationMinutes === fastestDuration && <span className="rounded-full bg-sky-500/15 px-2 py-0.5 text-[10px] font-bold text-sky-600">{t.fastest}</span>}
+                      {opt.transferCount === fewestTransfers && <span className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-bold text-violet-600">{t.fewestTransfers}</span>}
+                      {opt.totalWaitingMinutes === leastWaiting && <span className="rounded-full bg-teal-500/15 px-2 py-0.5 text-[10px] font-bold text-teal-600">{t.leastWaiting}</span>}
 
                       <span className="text-[11px] font-medium text-[var(--text-muted)]">
                         ~{opt.totalDurationMinutes}{' '}
                         {t.duration}
                       </span>
+                      <span className="text-[11px] font-medium text-[var(--text-muted)]">· {opt.totalWaitingMinutes} p {t.totalWait}</span>
                     </div>
 
                     <span
@@ -579,97 +680,24 @@ export function TripPlanner() {
                   </div>
 
                   <div className="mt-3 space-y-2.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <span
-                          className="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-lg px-1 text-xs font-bold text-white shadow-xs"
-                          style={{
-                            backgroundColor:
-                              firstSeg.line.color,
-                          }}
-                        >
-                          {firstSeg.line.number}
-                        </span>
-
-                        <span className="truncate font-semibold text-[var(--text-h)]">
-                          {stopName(
-                            firstSeg.fromStop,
-                          )}{' '}
-                          →{' '}
-                          {stopName(
-                            firstSeg.toStop,
-                          )}
-                        </span>
-                      </div>
-
-                      <span className="ml-2 shrink-0 font-bold tabular-nums text-[var(--text-h)]">
-                        {firstSeg.departureTimeLabel}{' '}
-                        -{' '}
-                        {firstSeg.arrivalTimeLabel}
-                      </span>
+                    <div className="flex justify-between text-[11px] font-semibold text-[var(--text-muted)]">
+                      <span>{t.departureAt} <strong className="text-[var(--text-h)]">{opt.segments[0].departureTimeLabel}</strong></span>
+                      <span>{t.arrivalAt} <strong className="text-[var(--text-h)]">{opt.segments.at(-1)?.arrivalTimeLabel}</strong></span>
                     </div>
-
-                    {!isDirect &&
-                      secondSeg &&
-                      opt.transferStop && (
-                        <>
-                          <div className="flex items-center gap-2 rounded-lg bg-[var(--surface)] px-2 py-1.5 text-[11px] text-[var(--text-muted)]">
-                            <Footprints className="h-3.5 w-3.5 shrink-0 text-amber-500" />
-
-                            <span className="truncate">
-                              {t.waitAt}{' '}
-                              <strong className="font-semibold text-[var(--text-h)]">
-                                {stopName(
-                                  opt.transferStop,
-                                )}
-                              </strong>{' '}
-                              (
-                              {
-                                opt.transferWaitMinutes
-                              }{' '}
-                              p)
-                            </span>
+                    {opt.segments.map((segment, index) => {
+                      const previous = opt.segments[index - 1];
+                      const wait = previous ? Math.max(0, Math.round((segment.departureAt.getTime() - previous.arrivalAt.getTime()) / 60_000)) : 0;
+                      return <div key={`${segment.line.id}-${segment.departureAt.getTime()}-${index}`} className="space-y-2">
+                        {previous && <div className="flex items-center gap-2 rounded-lg bg-[var(--surface)] px-2 py-1.5 text-[11px] text-[var(--text-muted)]"><Footprints className="h-3.5 w-3.5 shrink-0 text-amber-500" /><span>{t.waitAt}: <strong className="text-[var(--text-h)]">{stopName(segment.fromStop)}</strong> · {wait} p</span><ChevronRight className="ml-auto h-3.5 w-3.5" /></div>}
+                        <div className="rounded-xl border border-[var(--border)]/70 bg-[var(--surface)]/60 p-2.5">
+                          <div className="flex items-center justify-between gap-2 text-xs">
+                            <div className="flex min-w-0 items-center gap-2"><span className="flex h-6 min-w-6 items-center justify-center rounded-lg px-1 text-xs font-bold text-white" style={{ backgroundColor: segment.line.color }}>{segment.line.number}</span><Bus className="h-3.5 w-3.5 shrink-0 text-[var(--text-muted)]" /><span className="truncate font-semibold text-[var(--text-h)]">{stopName(segment.fromStop)} → {stopName(segment.toStop)}</span></div>
+                            <span className="shrink-0 font-bold tabular-nums text-[var(--text-h)]">{segment.departureTimeLabel}–{segment.arrivalTimeLabel}</span>
                           </div>
-
-                          <div className="flex items-center justify-between text-xs">
-                            <div className="flex min-w-0 items-center gap-2">
-                              <span
-                                className="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-lg px-1 text-xs font-bold text-white shadow-xs"
-                                style={{
-                                  backgroundColor:
-                                    secondSeg.line
-                                      .color,
-                                }}
-                              >
-                                {
-                                  secondSeg.line
-                                    .number
-                                }
-                              </span>
-
-                              <span className="truncate font-semibold text-[var(--text-h)]">
-                                {stopName(
-                                  secondSeg.fromStop,
-                                )}{' '}
-                                →{' '}
-                                {stopName(
-                                  secondSeg.toStop,
-                                )}
-                              </span>
-                            </div>
-
-                            <span className="ml-2 shrink-0 font-bold tabular-nums text-[var(--text-h)]">
-                              {
-                                secondSeg.departureTimeLabel
-                              }{' '}
-                              -{' '}
-                              {
-                                secondSeg.arrivalTimeLabel
-                              }
-                            </span>
-                          </div>
-                        </>
-                      )}
+                          <p className="mt-2 text-[10px] leading-relaxed text-[var(--text-muted)]"><strong>{segment.viaStops.length} {t.stops}:</strong> {segment.viaStops.map(stopName).join(' · ')}</p>
+                        </div>
+                      </div>;
+                    })}
                   </div>
                 </div>
               );

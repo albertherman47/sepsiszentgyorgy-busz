@@ -3,30 +3,46 @@
 
 :root {
   --font-sans: "Figtree", "Segoe UI", sans-serif;
-  --font-display: "Outfit", "Figtree", sans-serif;
+  --font-display: "Outfit", "Figtree", "Segoe UI", sans-serif;
 
-  --bg: #e8eef2;
-  --panel: #f7fafb;
-  --surface: #eef3f6;
-  --border: #d5dee5;
-  --border-strong: #b8c5d0;
-  --text: #3d4f5f;
-  --text-h: #0f1c27;
-  --text-muted: #6b7f90;
-  --brand: #0f766e;
-  --brand-soft: rgba(15, 118, 110, 0.12);
-  --accent-warm: #c2410c;
+  --bg: #edf2f4;
+  --panel: #ffffff;
+  --surface: #f5f8f9;
+
+  --border: #e2e9ed;
+  --border-strong: #cbd7dc;
+
+  --text: #566875;
+  --text-h: #142a38;
+  --text-muted: #7a8b95;
+
+  --brand: #087e72;
+  --brand-dark: #05665d;
+  --brand-soft: rgba(8, 126, 114, 0.09);
+
+  --accent-warm: #d05a22;
 
   font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.45;
   color: var(--text);
+
   background:
-    radial-gradient(1200px 600px at 10% -10%, rgba(15, 118, 110, 0.08), transparent 55%),
-    radial-gradient(900px 500px at 100% 0%, rgba(37, 99, 235, 0.06), transparent 50%),
+    radial-gradient(
+      1000px 550px at 8% -10%,
+      rgba(8, 126, 114, 0.08),
+      transparent 55%
+    ),
+    radial-gradient(
+      900px 500px at 100% 0%,
+      rgba(65, 136, 169, 0.07),
+      transparent 50%
+    ),
     var(--bg);
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -49,13 +65,18 @@ body,
 body {
   min-height: 100dvh;
   overflow: hidden;
+  background: var(--bg);
+}
+
+@media (max-width: 767px) {
+  .maplibregl-canvas { touch-action: pan-x pan-y; }
 }
 
 #root {
-  text-align: initial;
-  border: none;
   display: block;
   min-height: 100dvh;
+  border: none;
+  text-align: initial;
 }
 
 button,
@@ -63,16 +84,291 @@ input {
   font: inherit;
 }
 
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* -------------------------------------------------------
+   BRAND
+------------------------------------------------------- */
+
+.brand-mark {
+  background:
+    linear-gradient(
+      145deg,
+      #09988b 0%,
+      #087e72 55%,
+      #05665d 100%
+    );
+
+  box-shadow:
+    0 8px 18px rgba(8, 126, 114, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* -------------------------------------------------------
+   MAP
+------------------------------------------------------- */
+
+.map-stage .maplibregl-map {
+  height: 100%;
+}
+
+.map-stage {
+  isolation: isolate;
+}
+
+.map-status-card {
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 16px;
+
+  padding: 13px 15px;
+
+  background: rgba(255, 255, 255, 0.93);
+
+  box-shadow:
+    0 10px 30px rgba(18, 42, 56, 0.12),
+    0 2px 8px rgba(18, 42, 56, 0.05);
+
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 999px;
+
+  background: #11a980;
+
+  box-shadow:
+    0 0 0 4px rgba(17, 169, 128, 0.12),
+    0 0 12px rgba(17, 169, 128, 0.35);
+}
+
+/* MapLibre controls */
+
 .maplibregl-ctrl-attrib {
-  font-size: 10px;
+  font-size: 9px;
+  opacity: 0.75;
+}
+
+.maplibregl-ctrl-group {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  border-radius: 12px !important;
+
+  box-shadow:
+    0 6px 18px rgba(15, 35, 55, 0.12) !important;
 }
 
 .maplibregl-ctrl-group button {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
 }
 
 .bus-stop-marker:focus-visible {
   outline: 2px solid var(--brand);
-  outline-offset: 2px;
+  outline-offset: 3px;
+}
+
+/* -------------------------------------------------------
+   SCROLLBARS
+------------------------------------------------------- */
+
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--border-strong);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #aebdc4;
+}
+
+/* -------------------------------------------------------
+   ROUTE PLANNER
+------------------------------------------------------- */
+
+.route-planning-animation {
+  display: flex;
+
+  min-height: 190px;
+
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 1.25rem;
+
+  color: var(--text-muted);
+
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.route-planning-track {
+  position: relative;
+
+  display: flex;
+
+  width: min(260px, 82%);
+
+  align-items: center;
+  justify-content: space-between;
+}
+
+.route-planning-road {
+  position: absolute;
+
+  left: 20px;
+  right: 20px;
+
+  height: 3px;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background: var(--border-strong);
+}
+
+.route-planning-road::after {
+  position: absolute;
+
+  inset: 0;
+
+  width: 40%;
+
+  content: "";
+
+  border-radius: inherit;
+
+  background: var(--brand);
+
+  animation: route-road 1.35s ease-in-out infinite;
+}
+
+.route-planning-point {
+  z-index: 2;
+
+  display: grid;
+
+  width: 32px;
+  height: 32px;
+
+  place-items: center;
+
+  border-radius: 999px;
+
+  background: #059669;
+
+  color: white;
+
+  box-shadow: 0 0 0 5px rgba(5, 150, 105, 0.13);
+
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.route-planning-end {
+  background: #e11d48;
+
+  box-shadow:
+    0 0 0 5px rgba(225, 29, 72, 0.12);
+}
+
+.route-planning-bus {
+  position: absolute;
+
+  z-index: 3;
+
+  left: 20px;
+
+  width: 24px;
+  height: 24px;
+
+  padding: 4px;
+
+  border-radius: 7px;
+
+  background: var(--brand);
+
+  color: white;
+
+  box-shadow:
+    0 4px 12px rgba(15, 118, 110, 0.32);
+
+  animation: route-bus 1.35s ease-in-out infinite;
+}
+
+@keyframes route-bus {
+  from {
+    transform: translateX(0) scale(0.94);
+  }
+
+  58%,
+  to {
+    transform:
+      translateX(calc(min(260px, 82vw) - 72px))
+      scale(1);
+  }
+}
+
+@keyframes route-road {
+  from {
+    transform: translateX(-110%);
+  }
+
+  to {
+    transform: translateX(290%);
+  }
+}
+
+/* -------------------------------------------------------
+   ACCESSIBILITY / REDUCED MOTION
+------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .route-planning-road::after,
+  .route-planning-bus {
+    animation: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* -------------------------------------------------------
+   MOBILE
+------------------------------------------------------- */
+
+@media (max-width: 899px) {
+  body {
+    overscroll-behavior: none;
+  }
+
+  .map-stage {
+    border-radius: 0;
+  }
 }

@@ -7,6 +7,7 @@ import { stops } from '../data/busData';
 export function LineList() {
   const { language, lines, lineName, stopName } = useBusData();
   const selectedLineId = useAppStore((s) => s.selectedLineId);
+  const selectedLineDirection = useAppStore((s) => s.selectedLineDirection);
   const setSelectedLineId = useAppStore((s) => s.setSelectedLineId);
   const setSelectedStopId = useAppStore((s) => s.setSelectedStopId);
   const requestFlyToStop = useAppStore((s) => s.requestFlyToStop);
@@ -124,7 +125,9 @@ export function LineList() {
             const isExpanded = expandedLineId === line.id;
 
             // Get stops in order for this line
-            const lineStops = line.stopIds
+            const lineStops = (line.id === 'line-5d'
+              ? line.directionStopIds?.[selectedLineDirection] ?? line.stopIds
+              : line.stopIds)
               .map((id) => stops.find((s) => s.id === id))
               .filter((s): s is NonNullable<typeof s> => s !== undefined);
 

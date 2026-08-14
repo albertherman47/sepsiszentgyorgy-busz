@@ -1,9 +1,12 @@
+import { line2RoadPaths } from '../routes/line2';
+
 export const line2Data = {
   id: 'line-2',
   number: '2',
   name_hu: 'Bartók Béla (Körjárat)',
   name_ro: 'Str. Bartók Béla (Circulație)',
   color: '#3a86ff',
+  roadPaths: line2RoadPaths,
   stopIds: [
     'str-bartok-bela',
     'str-dealului',

@@ -24,6 +24,7 @@ function lineName(line: Line, language: Language): string {
 export function useBusData() {
   const language = useAppStore((s) => s.language);
   const selectedLineId = useAppStore((s) => s.selectedLineId);
+  const selectedLineDirection = useAppStore((s) => s.selectedLineDirection);
   const selectedStopId = useAppStore((s) => s.selectedStopId);
   const searchQuery = useAppStore((s) => s.searchQuery);
   const [now, setNow] = useState(() => new Date());
@@ -44,13 +45,17 @@ export function useBusData() {
       if (selectedLineId && !stop.lineIds.includes(selectedLineId)) {
         return false;
       }
+      if (selectedLineId === 'line-5d') {
+        const line = lines.find((item) => item.id === selectedLineId);
+        if (!(line?.directionStopIds?.[selectedLineDirection] ?? []).includes(stop.id)) return false;
+      }
       if (!q) return true;
       return (
         stop.name_hu.toLowerCase().includes(q) ||
         stop.name_ro.toLowerCase().includes(q)
       );
     });
-  }, [searchQuery, selectedLineId]);
+  }, [searchQuery, selectedLineId, selectedLineDirection]);
 
   const selectedStop = useMemo(
     () => stops.find((s) => s.id === selectedStopId) ?? null,
@@ -107,6 +112,7 @@ export function useBusData() {
     selectedStop,
     selectedLine,
     selectedLineId,
+    selectedLineDirection,
     stopDepartures,
     upcomingByLine,
     stopName: (stop: Stop) => stopName(stop, language),

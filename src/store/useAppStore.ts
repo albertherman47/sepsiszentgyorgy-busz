@@ -6,6 +6,7 @@ export type ActiveTab = 'stops' | 'lines' | 'planner';
 interface AppState {
   language: Language;
   selectedLineId: SelectedLineId;
+  selectedLineDirection: 'outbound' | 'return';
   selectedStopId: SelectedStopId;
   searchQuery: string;
   flyToStopId: string | null;
@@ -23,6 +24,7 @@ interface AppState {
   setLanguage: (language: Language) => void;
   toggleLanguage: () => void;
   setSelectedLineId: (id: SelectedLineId) => void;
+  setSelectedLineDirection: (direction: 'outbound' | 'return') => void;
   setSelectedStopId: (id: SelectedStopId) => void;
   setSearchQuery: (query: string) => void;
   requestFlyToStop: (id: string | null) => void;
@@ -39,6 +41,7 @@ interface AppState {
 export const useAppStore = create<AppState>((set, get) => ({
   language: 'hu',
   selectedLineId: null,
+  selectedLineDirection: 'outbound',
   selectedStopId: null,
   searchQuery: '',
   flyToStopId: null,
@@ -53,7 +56,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   setLanguage: (language) => set({ language }),
   toggleLanguage: () =>
     set({ language: get().language === 'hu' ? 'ro' : 'hu' }),
-  setSelectedLineId: (id) => set({ selectedLineId: id }),
+  setSelectedLineId: (id) => set({ selectedLineId: id, selectedLineDirection: 'outbound' }),
+  setSelectedLineDirection: (direction) => set({ selectedLineDirection: direction }),
   setSelectedStopId: (id) => set({ selectedStopId: id }),
   setSearchQuery: (query) => set({ searchQuery: query }),
   requestFlyToStop: (id) => set({ flyToStopId: id }),

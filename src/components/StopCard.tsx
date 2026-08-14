@@ -1,10 +1,17 @@
-import { CalendarDays, Clock, MapPin, X } from 'lucide-react';
+import {
+  CalendarDays,
+  ChevronRight,
+  Clock,
+  MapPin,
+  X,
+} from 'lucide-react';
+
 import { formatCountdown } from '../utils/timeUtils';
+
 import { useBusData } from '../hooks/useBusData';
 import { useAppStore } from '../store/useAppStore';
 
 interface StopCardProps {
-  /** When true, renders as mobile bottom-sheet panel content */
   variant?: 'drawer' | 'panel';
 }
 
@@ -19,22 +26,28 @@ export function StopCard({
     upcomingByLine,
   } = useBusData();
 
-  const setSelectedStopId = useAppStore((s) => s.setSelectedStopId);
-  const setFullScheduleStopId = useAppStore((s) => s.setFullScheduleStopId);
+  const setSelectedStopId = useAppStore(
+    (s) => s.setSelectedStopId,
+  );
 
-  // Nincs kiválasztott megálló
+  const setFullScheduleStopId = useAppStore(
+    (s) => s.setFullScheduleStopId,
+  );
+
+  const hu = language === 'hu';
+
+  /* Empty state */
   if (!selectedStop) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 px-6 py-10 text-center text-[var(--text-muted)]">
-        <MapPin
-          className="h-8 w-8 opacity-40"
-          aria-hidden
-        />
+      <div className="flex h-full min-h-[180px] flex-col items-center justify-center px-6 text-center">
+        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--surface)] text-[var(--text-muted)]">
+          <MapPin className="h-5 w-5" />
+        </div>
 
-        <p className="text-sm">
-          {language === 'hu'
+        <p className="max-w-[230px] text-sm font-medium leading-5 text-[var(--text-muted)]">
+          {hu
             ? 'Válassz egy megállót a térképen vagy a listából'
-            : 'Alege o stație pe hartă sau din listă'}
+            : 'Alege o stație de pe hartă sau din listă'}
         </p>
       </div>
     );
@@ -46,97 +59,161 @@ export function StopCard({
     <div
       className={
         variant === 'drawer'
-          ? 'flex max-h-[55vh] flex-col'
+          ? 'flex h-full min-h-0 flex-col'
           : 'flex h-full min-h-0 flex-col'
       }
     >
-      {/* ================================================== */}
-      {/* FEJLÉC */}
-      {/* ================================================== */}
+      {/* Header */}
+      <div className="border-b border-[var(--border)] bg-white px-4 pb-3 pt-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="mb-1 flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--brand)]" />
 
-      <div className="flex items-start justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
-        <div className="min-w-0 text-left">
-          <p className="text-xs font-medium uppercase tracking-wide text-[var(--text-muted)]">
-            {language === 'hu' ? 'Megálló' : 'Stație'}
-          </p>
+              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                {hu ? 'Megálló' : 'Stație'}
+              </span>
+            </div>
 
-          <h2 className="truncate font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--text-h)]">
-            {title}
-          </h2>
-        </div>
+            <h2 className="truncate font-[family-name:var(--font-display)] text-[18px] font-bold tracking-tight text-[var(--text-h)]">
+              {title}
+            </h2>
+          </div>
 
-        <div className="flex items-center gap-1 shrink-0">
-          <button
-            type="button"
-            onClick={() => setFullScheduleStopId(selectedStop.id)}
-            className="rounded-lg p-2 text-[var(--text-muted)] transition hover:bg-[var(--surface)] hover:text-[var(--brand)]"
-            aria-label={language === 'hu' ? 'Teljes menetrend' : 'Orar complet'}
-            title={language === 'hu' ? 'Teljes napi menetrend' : 'Orar complet zilnic'}
-          >
-            <CalendarDays className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedStopId(null)}
-            className="rounded-lg p-2 text-[var(--text-muted)] transition hover:bg-[var(--surface)] hover:text-[var(--text-h)]"
-            aria-label={language === 'hu' ? 'Bezárás' : 'Închide'}
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              onClick={() =>
+                setFullScheduleStopId(
+                  selectedStop.id,
+                )
+              }
+              className="
+                flex h-9 w-9
+                items-center justify-center
+                rounded-xl
+                border border-[var(--border)]
+                bg-[var(--surface)]
+                text-[var(--text-muted)]
+                transition
+                hover:border-[var(--brand)]
+                hover:bg-[var(--brand-soft)]
+                hover:text-[var(--brand)]
+              "
+              aria-label={
+                hu
+                  ? 'Teljes menetrend'
+                  : 'Orar complet'
+              }
+            >
+              <CalendarDays className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setSelectedStopId(null)
+              }
+              className="
+                flex h-9 w-9
+                items-center justify-center
+                rounded-xl
+                text-[var(--text-muted)]
+                transition
+                hover:bg-[var(--surface)]
+                hover:text-[var(--text-h)]
+              "
+              aria-label={
+                hu ? 'Bezárás' : 'Închide'
+              }
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* ================================================== */}
-      {/* MENETREND */}
-      {/* ================================================== */}
+      {/* Departures */}
+      <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--surface)] px-4 py-3">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-[0.13em] text-[var(--text-muted)]">
+            {hu
+              ? 'Következő indulások'
+              : 'Următoarele plecări'}
+          </span>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+
+            Live
+          </span>
+        </div>
+
         {upcomingByLine.length === 0 ? (
-          <p className="py-6 text-center text-sm text-[var(--text-muted)]">
-            {language === 'hu'
-              ? 'Nincs menetrend ehhez a megállóhoz'
-              : 'Nu există orar pentru această stație'}
-          </p>
+          <div className="rounded-2xl border border-[var(--border)] bg-white px-5 py-8 text-center">
+            <Clock className="mx-auto mb-2 h-6 w-6 text-[var(--text-muted)] opacity-50" />
+
+            <p className="text-sm font-medium text-[var(--text-muted)]">
+              {hu
+                ? 'Nincs további indulás'
+                : 'Nu mai sunt plecări'}
+            </p>
+          </div>
         ) : (
-          <ul className="space-y-3">
+          <div className="space-y-2">
             {upcomingByLine.map(
               ({ line, schedule, upcoming }, idx) => {
                 const direction =
-                  schedule.direction?.[language];
+                  schedule.direction?.[
+                    language
+                  ];
+
+                const next = upcoming[0];
 
                 return (
-                  <li
+                  <div
                     key={`${line.id}-${schedule.direction?.hu ?? 'default'}-${idx}`}
-                    className="rounded-xl bg-[var(--surface)] p-3 ring-1 ring-[var(--border)]"
+                    className="
+                      overflow-hidden
+                      rounded-2xl
+                      border border-[var(--border)]
+                      bg-white
+                      shadow-[0_2px_10px_rgba(15,35,55,0.04)]
+                      transition
+                      hover:border-[var(--border-strong)]
+                    "
                   >
-                    {/* ====================================== */}
-                    {/* JÁRAT */}
-                    {/* ====================================== */}
-
-                    <div className="mb-2 flex items-start gap-2">
+                    <div className="flex items-center gap-3 p-3">
+                      {/* Line */}
                       <span
-                        className="inline-flex h-7 min-w-7 shrink-0 items-center justify-center rounded-md px-1.5 text-sm font-bold text-white"
+                        className="
+                          flex h-10 min-w-10
+                          shrink-0 items-center
+                          justify-center
+                          rounded-xl
+                          text-sm font-black
+                          text-white
+                        "
                         style={{
-                          backgroundColor: line.color,
+                          backgroundColor:
+                            line.color,
+
+                          boxShadow:
+                            `0 5px 14px ${line.color}35`,
                         }}
                       >
                         {line.number}
                       </span>
 
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-medium text-[var(--text-h)]">
+                      {/* Destination */}
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-bold text-[var(--text-h)]">
                           {lineName(line)}
                         </div>
 
-                        {/* ================================== */}
-                        {/* IRÁNY */}
-                        {/* ================================== */}
-
                         {direction && (
-                          <div className="mt-0.5 flex items-center gap-1 text-xs text-[var(--text-muted)]">
-                            <span className="font-medium">
-                              →
-                            </span>
+                          <div className="mt-0.5 flex min-w-0 items-center gap-1 text-[11px] text-[var(--text-muted)]">
+                            <ChevronRight className="h-3 w-3 shrink-0" />
 
                             <span className="truncate">
                               {direction}
@@ -144,56 +221,69 @@ export function StopCard({
                           </div>
                         )}
                       </div>
-                    </div>
 
-                    {/* ====================================== */}
-                    {/* INDULÁSOK */}
-                    {/* ====================================== */}
-
-                    {upcoming.length === 0 ? (
-                      <p className="py-1 text-xs text-[var(--text-muted)]">
-                        {language === 'hu'
-                          ? 'Ma már nincs több indulás'
-                          : 'Nu mai sunt plecări astăzi'}
-                      </p>
-                    ) : (
-                      <ul className="space-y-1.5">
-                        {upcoming.map((dep) => (
-                          <li
-                            key={`${line.id}-${schedule.direction?.hu ?? 'default'}-${dep.timeLabel}-${dep.departureAt.getTime()}`}
-                            className="flex items-center justify-between gap-2 text-sm"
-                          >
-                            <span className="inline-flex items-center gap-1.5 tabular-nums text-[var(--text-muted)]">
-                              <Clock
-                                className="h-3.5 w-3.5"
-                                aria-hidden
-                              />
-
-                              {dep.timeLabel}
-                            </span>
-
-                            <span
-                              className={
-                                `font-semibold tabular-nums ${dep.minutesUntil <= 2
+                      {/* Countdown */}
+                      {next && (
+                        <div className="shrink-0 text-right">
+                          <div
+                            className={`
+                              text-[17px]
+                              font-black
+                              tabular-nums
+                              ${
+                                next.minutesUntil <= 2
                                   ? 'text-[var(--accent-warm)]'
                                   : 'text-[var(--brand)]'
-                                }`
                               }
-                            >
-                              {formatCountdown(
-                                dep.minutesUntil,
-                                language,
-                              )}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
+                            `}
+                          >
+                            {formatCountdown(
+                              next.minutesUntil,
+                              language,
+                            )}
+                          </div>
+
+                          <div className="mt-0.5 text-[10px] font-semibold tabular-nums text-[var(--text-muted)]">
+                            {next.timeLabel}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Additional departures */}
+                    {upcoming.length > 1 && (
+                      <div className="border-t border-[var(--border)] bg-[var(--surface)] px-3 py-2">
+                        <div className="flex items-center gap-2 overflow-x-auto">
+                          <Clock className="h-3 w-3 shrink-0 text-[var(--text-muted)]" />
+
+                          {upcoming
+                            .slice(1, 4)
+                            .map((dep) => (
+                              <span
+                                key={`${dep.timeLabel}-${dep.departureAt.getTime()}`}
+                                className="
+                                  rounded-lg
+                                  bg-white
+                                  px-2 py-1
+                                  text-[10px]
+                                  font-bold
+                                  tabular-nums
+                                  text-[var(--text)]
+                                  ring-1
+                                  ring-[var(--border)]
+                                "
+                              >
+                                {dep.timeLabel}
+                              </span>
+                            ))}
+                        </div>
+                      </div>
                     )}
-                  </li>
+                  </div>
                 );
               },
             )}
-          </ul>
+          </div>
         )}
       </div>
     </div>

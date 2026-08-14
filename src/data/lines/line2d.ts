@@ -1,9 +1,12 @@
+import { line2DRoadPaths } from '../routes/line2d';
+
 export const line2DData = {
   id: 'line-2d',
   number: '2D',
   name_hu: 'Szépmező – Bartók Béla utca',
   name_ro: 'Câmpul Frumos – Str. Bartók Béla',
   color: '#0077b6',
+  roadPaths: line2DRoadPaths,
   stopIds: [
     'campul-frumos',
     'autoliv',
@@ -15,13 +18,11 @@ export const line2DData = {
     'cart-ciucului',
     'piata-kalvin',
     'liceul-de-arta-plugor-sandor',
-    'str-gabor-aron',
+
     'institutul-de-proiectari',
     'str-dealului',
-    'spitalul-judetean',
-    'str-vanatorilor-1',
-    'str-vanatorilor-2',
-    'str-ghioceilor',
+
+    'multi-trans',
     'str-bartok-bela',
 
   ],

@@ -141,8 +141,12 @@ export const lines: Line[] = registeredLines.map(
     color: line.color,
     stopIds: line.stopIds,
 
+    paths: (line as any).roadPaths,
+    directionPaths: (line as any).directionPaths,
+    directionStopIds: { outbound: (line as any).outboundStopIds, return: (line as any).returnStopIds },
     path:
       (line as any).roadPath ||
+      (line as any).roadPaths?.[0] ||
       line.stopIds
         .map((stopId) => {
           const stop = stopMap.get(stopId);

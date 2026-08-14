@@ -1,9 +1,12 @@
+import { line5RoadPaths } from '../routes/line5';
+
 export const line5Data = {
   id: 'line-5',
   number: '5',
   name_hu: 'József Attila utca – Sepsi Aréna',
   name_ro: 'Str. József Attila – Arena Sepsi',
   color: '#f4a261',
+  roadPaths: line5RoadPaths,
   stopIds: [
     'str-jozsef-attila-2',
     'str-jozsef-attila-1',

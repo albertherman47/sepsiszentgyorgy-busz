@@ -1,5 +1,10 @@
+import { useState } from 'react';
 import {
+  ArrowLeft,
   Bus,
+  ChevronDown,
+  ChevronUp,
+  Filter,
   LocateFixed,
   MapPin,
   Navigation,
@@ -7,7 +12,6 @@ import {
 } from 'lucide-react';
 
 import { Header } from './Header';
-import { LineFilter } from './LineFilter';
 import { LineList } from './LineList';
 import { StopCard } from './StopCard';
 import { TripPlanner } from './TripPlanner';
@@ -24,18 +28,20 @@ export function Sidebar({
 }: SidebarProps) {
   const {
     language,
-    lines,
     filteredStops,
     selectedStop,
     stopName,
   } = useBusData();
 
-  const selectedLineId = useAppStore((s) => s.selectedLineId);
   const searchQuery = useAppStore((s) => s.searchQuery);
   const setSearchQuery = useAppStore((s) => s.setSearchQuery);
 
   const setSelectedStopId = useAppStore(
     (s) => s.setSelectedStopId,
+  );
+
+  const setSelectedLineId = useAppStore(
+    (s) => s.setSelectedLineId,
   );
 
   const requestFlyToStop = useAppStore(
@@ -54,6 +60,8 @@ export function Sidebar({
     (s) => s.setActiveTab,
   );
 
+  const [mobileFilterCollapsed, setMobileFilterCollapsed] = useState(false);
+
   const hu = language === 'hu';
 
   const t = hu
@@ -71,6 +79,9 @@ export function Sidebar({
 
         locate: 'Saját helyzet',
         locateError: 'Nem sikerült meghatározni a helyzetet',
+        filterToggleShow: 'Keresés megjelenítése',
+        filterToggleHide: 'Keresés elrejtése',
+        backToList: 'Vissza a megállókhoz',
       }
     : {
         tabStops: 'Stații',
@@ -86,6 +97,9 @@ export function Sidebar({
 
         locate: 'Locația mea',
         locateError: 'Nu s-a putut determina locația',
+        filterToggleShow: 'Afișează căutarea',
+        filterToggleHide: 'Ascunde căutarea',
+        backToList: 'Înapoi la stații',
       };
 
   const handleLocate = () => {
@@ -133,7 +147,10 @@ export function Sidebar({
           {/* Stops */}
           <button
             type="button"
-            onClick={() => setActiveTab('stops')}
+            onClick={() => {
+              setSelectedLineId(null);
+              setActiveTab('stops');
+            }}
             className={`
               flex flex-1 items-center justify-center gap-1.5
               rounded-lg py-2.5 text-xs font-bold
@@ -192,74 +209,112 @@ export function Sidebar({
         </div>
       </div>
 
-      {/* Search */}
-      {activeTab !== 'planner' && (
-        <div className="space-y-3 border-b border-[var(--border)] bg-white px-4 py-3.5">
-          <div className="relative">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]"
-              aria-hidden
-            />
+      {/* Mobile back bar when stop is selected */}
+      {mode === 'mobile' && selectedStop && activeTab !== 'planner' && (
+        <div className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--brand-soft)]/50 px-3.5 py-2">
+          <button
+            type="button"
+            onClick={() => setSelectedStopId(null)}
+            className="inline-flex items-center gap-1.5 text-xs font-black text-[var(--brand)] active:scale-95 transition"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>{t.backToList}</span>
+          </button>
 
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) =>
-                setSearchQuery(e.target.value)
-              }
-              placeholder={
-                activeTab === 'stops'
-                  ? t.searchStops
-                  : t.searchLines
-              }
-              className="
-                w-full rounded-xl
-                border border-transparent
-                bg-[var(--surface)]
-                py-2.5 pl-10 pr-3
-                text-sm font-medium
-                text-[var(--text-h)]
-                placeholder:text-[var(--text-muted)]
-                outline-none
-                transition
-                focus:border-[var(--brand)]
-                focus:bg-white
-                focus:ring-4
-                focus:ring-[var(--brand)]/10
-              "
-            />
-          </div>
+          <span className="truncate text-[10px] font-bold text-[var(--text-muted)] max-w-[150px]">
+            {stopName(selectedStop)}
+          </span>
+        </div>
+      )}
 
-          {activeTab === 'stops' && (
-            <>
-              <LineFilter
-                lines={lines}
-                allLabel={t.all}
-              />
+      {/* Search & Filters */}
+      {activeTab !== 'planner' && (!selectedStop || mode === 'desktop') && (
+        <div className="border-b border-[var(--border)] bg-white">
+          {/* Mobile Collapsible Header */}
+          {mode === 'mobile' && (
+            <div className="flex items-center justify-between px-4 py-2 bg-[var(--surface)]/70 border-b border-[var(--border)]/50">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1">
+                <Filter className="h-3 w-3" />
+                {hu ? 'Keresés' : 'Căutare'}
+              </span>
 
               <button
                 type="button"
-                onClick={handleLocate}
-                className="
-                  inline-flex w-full items-center
-                  justify-center gap-2
-                  rounded-xl border
-                  border-[var(--border)]
-                  bg-white
-                  px-3 py-2.5
-                  text-xs font-bold
-                  text-[var(--text-h)]
-                  transition
-                  hover:border-[var(--brand)]
-                  hover:bg-[var(--brand-soft)]
-                  hover:text-[var(--brand)]
-                "
+                onClick={() => setMobileFilterCollapsed((prev) => !prev)}
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-[var(--brand)]"
               >
-                <LocateFixed className="h-4 w-4" />
-
-                {t.locate}
+                <span>{mobileFilterCollapsed ? t.filterToggleShow : t.filterToggleHide}</span>
+                {mobileFilterCollapsed ? (
+                  <ChevronDown className="h-3.5 w-3.5" />
+                ) : (
+                  <ChevronUp className="h-3.5 w-3.5" />
+                )}
               </button>
-            </>
+            </div>
+          )}
+
+          {(!mobileFilterCollapsed || mode === 'desktop') && (
+            <div className="space-y-3 px-4 py-3.5">
+              <div className="relative">
+                <Search
+                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]"
+                  aria-hidden
+                />
+
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) =>
+                    setSearchQuery(e.target.value)
+                  }
+                  placeholder={
+                    activeTab === 'stops'
+                      ? t.searchStops
+                      : t.searchLines
+                  }
+                  className="
+                    w-full rounded-xl
+                    border border-transparent
+                    bg-[var(--surface)]
+                    py-2.5 pl-10 pr-3
+                    text-sm font-medium
+                    text-[var(--text-h)]
+                    placeholder:text-[var(--text-muted)]
+                    outline-none
+                    transition
+                    focus:border-[var(--brand)]
+                    focus:bg-white
+                    focus:ring-4
+                    focus:ring-[var(--brand)]/10
+                  "
+                />
+              </div>
+
+              {activeTab === 'stops' && (
+                <button
+                  type="button"
+                  onClick={handleLocate}
+                  className="
+                    inline-flex w-full items-center
+                    justify-center gap-2
+                    rounded-xl border
+                    border-[var(--border)]
+                    bg-white
+                    px-3 py-2.5
+                    text-xs font-bold
+                    text-[var(--text-h)]
+                    transition
+                    hover:border-[var(--brand)]
+                    hover:bg-[var(--brand-soft)]
+                    hover:text-[var(--brand)]
+                  "
+                >
+                  <LocateFixed className="h-4 w-4" />
+
+                  {t.locate}
+                </button>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -297,10 +352,6 @@ export function Sidebar({
               {filteredStops.map((stop, idx) => {
                 const active =
                   selectedStop?.id === stop.id;
-                const isLineActive = selectedLineId !== null;
-                const isFirst = isLineActive && idx === 0;
-                const isLast = isLineActive && idx === filteredStops.length - 1;
-                const activeLine = selectedLineId ? lines.find((l) => l.id === selectedLineId) : null;
 
                 return (
                   <li key={`${stop.id}-${idx}`}>
@@ -320,47 +371,19 @@ export function Sidebar({
                         }
                       `}
                     >
-                      {/* Step number badge when line is filtered, or line dots */}
-                      {isLineActive ? (
-                        <span
-                          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-xs transition group-hover:scale-105 ${
-                            isFirst
-                              ? 'ring-2 ring-emerald-500'
-                              : isLast
-                                ? 'ring-2 ring-rose-500'
-                                : ''
-                          }`}
-                          style={{
-                            backgroundColor: activeLine?.color ?? 'var(--brand)',
-                          }}
-                        >
-                          {idx + 1}
-                        </span>
-                      ) : (
-                        <span
-                          className="flex w-4 shrink-0 gap-1"
-                          aria-hidden
-                        >
-                          {stop.lineIds.map((lid) => {
-                            const line = lines.find(
-                              (l) => l.id === lid,
-                            );
-
-                            if (!line) return null;
-
-                            return (
-                              <span
-                                key={lid}
-                                className="h-2 w-2 rounded-full"
-                                style={{
-                                  backgroundColor:
-                                    line.color,
-                                }}
-                              />
-                            );
-                          })}
-                        </span>
-                      )}
+                      <div
+                        className={`
+                          flex h-7 w-7 shrink-0 items-center justify-center
+                          rounded-xl transition-all
+                          ${
+                            active
+                              ? 'bg-[var(--brand)] text-white shadow-xs'
+                              : 'bg-[var(--surface)] text-[var(--text-muted)] group-hover:bg-white group-hover:text-[var(--brand)]'
+                          }
+                        `}
+                      >
+                        <MapPin className="h-3.5 w-3.5" />
+                      </div>
 
                       {/* Stop */}
                       <span
@@ -368,7 +391,7 @@ export function Sidebar({
                           truncate text-sm font-semibold
                           ${
                             active
-                              ? 'text-[var(--brand)]'
+                              ? 'text-[var(--brand)] font-bold'
                               : 'text-[var(--text-h)]'
                           }
                         `}
@@ -376,20 +399,8 @@ export function Sidebar({
                         {stopName(stop)}
                       </span>
 
-                      {/* Endpoint badges */}
-                      {isFirst && (
-                        <span className="ml-auto rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider shrink-0">
-                          {language === 'hu' ? 'Start' : 'Plecare'}
-                        </span>
-                      )}
-                      {isLast && (
-                        <span className="ml-auto rounded-md bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider shrink-0">
-                          {language === 'hu' ? 'Cél' : 'Sosire'}
-                        </span>
-                      )}
-
-                      {active && !isFirst && !isLast && (
-                        <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--brand)]" />
+                      {active && (
+                        <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-[var(--brand)]" />
                       )}
                     </button>
                   </li>

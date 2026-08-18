@@ -24,6 +24,11 @@ export interface Line {
   returnStopIds?: string[];
   directionStopIds?: Partial<Record<'outbound' | 'return', string[]>>;
 
+  directionNames?: {
+    outbound: { hu: string; ro: string };
+    return: { hu: string; ro: string };
+  };
+
   path: LngLat[];
 
   roadPath?: LngLat[];
@@ -43,6 +48,8 @@ export interface Schedule {
     hu: string;
     ro: string;
   };
+
+  directionType?: 'outbound' | 'return';
 
   times: string[];
 

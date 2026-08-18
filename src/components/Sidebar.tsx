@@ -30,6 +30,7 @@ export function Sidebar({
     stopName,
   } = useBusData();
 
+  const selectedLineId = useAppStore((s) => s.selectedLineId);
   const searchQuery = useAppStore((s) => s.searchQuery);
   const setSearchQuery = useAppStore((s) => s.setSearchQuery);
 
@@ -293,12 +294,16 @@ export function Sidebar({
             </div>
 
             <ul className="pb-3">
-              {filteredStops.map((stop) => {
+              {filteredStops.map((stop, idx) => {
                 const active =
                   selectedStop?.id === stop.id;
+                const isLineActive = selectedLineId !== null;
+                const isFirst = isLineActive && idx === 0;
+                const isLast = isLineActive && idx === filteredStops.length - 1;
+                const activeLine = selectedLineId ? lines.find((l) => l.id === selectedLineId) : null;
 
                 return (
-                  <li key={stop.id}>
+                  <li key={`${stop.id}-${idx}`}>
                     <button
                       type="button"
                       onClick={() =>
@@ -315,30 +320,47 @@ export function Sidebar({
                         }
                       `}
                     >
-                      {/* Line indicators */}
-                      <span
-                        className="flex w-4 shrink-0 gap-1"
-                        aria-hidden
-                      >
-                        {stop.lineIds.map((lid) => {
-                          const line = lines.find(
-                            (l) => l.id === lid,
-                          );
+                      {/* Step number badge when line is filtered, or line dots */}
+                      {isLineActive ? (
+                        <span
+                          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-xs transition group-hover:scale-105 ${
+                            isFirst
+                              ? 'ring-2 ring-emerald-500'
+                              : isLast
+                                ? 'ring-2 ring-rose-500'
+                                : ''
+                          }`}
+                          style={{
+                            backgroundColor: activeLine?.color ?? 'var(--brand)',
+                          }}
+                        >
+                          {idx + 1}
+                        </span>
+                      ) : (
+                        <span
+                          className="flex w-4 shrink-0 gap-1"
+                          aria-hidden
+                        >
+                          {stop.lineIds.map((lid) => {
+                            const line = lines.find(
+                              (l) => l.id === lid,
+                            );
 
-                          if (!line) return null;
+                            if (!line) return null;
 
-                          return (
-                            <span
-                              key={lid}
-                              className="h-2 w-2 rounded-full"
-                              style={{
-                                backgroundColor:
-                                  line.color,
-                              }}
-                            />
-                          );
-                        })}
-                      </span>
+                            return (
+                              <span
+                                key={lid}
+                                className="h-2 w-2 rounded-full"
+                                style={{
+                                  backgroundColor:
+                                    line.color,
+                                }}
+                              />
+                            );
+                          })}
+                        </span>
+                      )}
 
                       {/* Stop */}
                       <span
@@ -354,7 +376,19 @@ export function Sidebar({
                         {stopName(stop)}
                       </span>
 
-                      {active && (
+                      {/* Endpoint badges */}
+                      {isFirst && (
+                        <span className="ml-auto rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider shrink-0">
+                          {language === 'hu' ? 'Start' : 'Plecare'}
+                        </span>
+                      )}
+                      {isLast && (
+                        <span className="ml-auto rounded-md bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider shrink-0">
+                          {language === 'hu' ? 'Cél' : 'Sosire'}
+                        </span>
+                      )}
+
+                      {active && !isFirst && !isLast && (
                         <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--brand)]" />
                       )}
                     </button>

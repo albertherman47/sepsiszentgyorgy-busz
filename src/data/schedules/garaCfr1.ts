@@ -264,8 +264,8 @@ export const garaCfr1Schedules: Schedule[] = [
     stopId: 'gara-cfr-1',
     lineId: 'line-1d',
     direction: {
-      hu: 'Szépmező',
-      ro: 'Câmpul Frumos',
+      hu: 'Szemerja (Gólya utca)',
+      ro: 'Simeria (Str. Berzei)',
     },
     times: [
       '04:09', '04:34', '04:59',
@@ -286,8 +286,8 @@ export const garaCfr1Schedules: Schedule[] = [
     stopId: 'gara-cfr-1',
     lineId: 'line-2d',
     direction: {
-      hu: 'Szépmező',
-      ro: 'Câmpul Frumos',
+      hu: 'Bartók Béla utca',
+      ro: 'Str. Bartók Béla',
     },
     times: [
       '04:45',
@@ -307,8 +307,8 @@ export const garaCfr1Schedules: Schedule[] = [
     stopId: 'gara-cfr-1',
     lineId: 'line-5d',
     direction: {
-      hu: 'Szépmező',
-      ro: 'Câmpul Frumos',
+      hu: 'József Attila utca',
+      ro: 'Str. József Attila',
     },
     times: [
       '06:02', '06:32',

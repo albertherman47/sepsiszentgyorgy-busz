@@ -7,38 +7,43 @@ export const line5DData = {
   id: 'line-5d',
   number: '5D',
 
-  name_hu: 'Multi-Trans – Vasútállomás',
-  name_ro: 'Multi-Trans – Gara CFR',
+  name_hu: 'József Attila utca – Multi-Trans',
+  name_ro: 'Str. József Attila – Multi-Trans',
 
   color: '#e76f51',
 
   roadPaths: line5DRoadPaths,
+
+  directionNames: {
+    outbound: { hu: 'Multi-Trans (Szépmező) felé', ro: 'Spre Multi-Trans (Câmpul Frumos)' },
+    return: { hu: 'József Attila utca felé', ro: 'Spre Str. József Attila' },
+  },
 
   directionPaths: {
     outbound: line5DRoadPaths,
     return: line5DReturnRoadPaths,
   },
 
-  // Multi-Trans → József Attila 2
+  // József Attila 2 → Multi-Trans (Szépmező felé)
   outboundStopIds: [
     'str-jozsef-attila-2',
     'str-jozsef-attila-1',
     'str-kos-karoly',
     'fabrica-de-tigarete',
-    'col-mihai-viteazul',
+    'liceul-m-viteazul',
     'casa-cu-arcade',
     'biserica-reformata',
     'bdul-g-balan-1',
     'bdul-g-balan-2',
     'str-lacramioarei-2',
     'str-lacramioarei-1',
-    'gara-cfr-1',
+    'gara-cfr-2',
     'autoliv',
     'campul-frumos',
     'multi-trans',
   ],
 
-  // József Attila 2 → Multi-Trans
+  // Multi-Trans → József Attila 2 (József Attila felé)
   returnStopIds: [
     'multi-trans',
     'campul-frumos',
@@ -56,13 +61,49 @@ export const line5DData = {
     'str-jozsef-attila-2',
   ],
 
-  // Alapértelmezett lista, hogy a meglévő kódok se törjenek el.
+  directionStopIds: {
+    outbound: [
+      'str-jozsef-attila-2',
+      'str-jozsef-attila-1',
+      'str-kos-karoly',
+      'fabrica-de-tigarete',
+      'liceul-m-viteazul',
+      'casa-cu-arcade',
+      'biserica-reformata',
+      'bdul-g-balan-1',
+      'bdul-g-balan-2',
+      'str-lacramioarei-2',
+      'str-lacramioarei-1',
+      'gara-cfr-2',
+      'autoliv',
+      'campul-frumos',
+      'multi-trans',
+    ],
+    return: [
+      'multi-trans',
+      'campul-frumos',
+      'autoliv',
+      'gara-cfr-1',
+      'str-lacramioarei-1',
+      'str-lacramioarei-2',
+      'bdul-n-iorga-1',
+      'bdul-n-iorga-2',
+      'tribunal',
+      'institutul-de-proiectari',
+      'str-dealului',
+      'str-dozsa-gyorgy',
+      'str-borviz',
+      'str-jozsef-attila-2',
+    ],
+  },
+
+  // Teljes megállólista
   stopIds: [
     'str-jozsef-attila-2',
     'str-jozsef-attila-1',
     'str-kos-karoly',
     'fabrica-de-tigarete',
-    'col-mihai-viteazul',
+    'liceul-m-viteazul',
     'casa-cu-arcade',
     'biserica-reformata',
     'bdul-g-balan-1',
@@ -70,8 +111,16 @@ export const line5DData = {
     'str-lacramioarei-2',
     'str-lacramioarei-1',
     'gara-cfr-1',
+    'gara-cfr-2',
     'autoliv',
     'campul-frumos',
     'multi-trans',
+    'bdul-n-iorga-1',
+    'bdul-n-iorga-2',
+    'tribunal',
+    'institutul-de-proiectari',
+    'str-dealului',
+    'str-dozsa-gyorgy',
+    'str-borviz',
   ],
 };

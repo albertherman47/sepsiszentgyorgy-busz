@@ -1,6 +1,5 @@
 import {
   CalendarDays,
-  ChevronRight,
   Clock,
   MapPin,
   X,
@@ -212,10 +211,11 @@ export function StopCard({
                         </div>
 
                         {direction && (
-                          <div className="mt-0.5 flex min-w-0 items-center gap-1 text-[11px] text-[var(--text-muted)]">
-                            <ChevronRight className="h-3 w-3 shrink-0" />
-
-                            <span className="truncate">
+                          <div className="mt-1 inline-flex max-w-full items-center gap-1 rounded-md bg-[var(--surface)] px-2 py-0.5 text-xs font-semibold text-[var(--text-h)] ring-1 ring-[var(--border)]">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                              {language === 'hu' ? 'Irány:' : 'Direcția:'}
+                            </span>
+                            <span className="truncate font-bold text-[var(--brand)]">
                               {direction}
                             </span>
                           </div>

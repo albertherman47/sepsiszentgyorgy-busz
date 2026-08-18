@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Layers, X } from 'lucide-react';
+import { ArrowLeftRight, Layers, X } from 'lucide-react';
 import {
   LngLatBounds,
   Map as MapLibreMap,
@@ -12,7 +12,7 @@ import {
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { CITY_CENTER, DEFAULT_ZOOM, getStopById, lines, stops } from '../data/busData';
 import { useAppStore } from '../store/useAppStore';
-import { useBusData } from '../hooks/useBusData';
+import { getLineEndpoints, useBusData } from '../hooks/useBusData';
 
 setWorkerUrl(maplibreWorkerUrl);
 
@@ -127,6 +127,7 @@ export function MapView() {
   const setSelectedLineId = useAppStore((s) => s.setSelectedLineId);
   const selectedDirection = useAppStore((s) => s.selectedLineDirection);
   const setSelectedDirection = useAppStore((s) => s.setSelectedLineDirection);
+  const toggleSelectedLineDirection = useAppStore((s) => s.toggleSelectedLineDirection);
 
   useEffect(() => {
   const map = mapRef.current;
@@ -538,8 +539,9 @@ export function MapView() {
       // tartozó megállók láthatók.
       const isVisible =
         selectedLineId === null ||
-        stop.lineIds.includes(selectedLineId) &&
-        (selectedLineId !== 'line-5d' || (selectedLine?.directionStopIds?.[selectedDirection] ?? []).includes(stop.id));
+        (stop.lineIds.includes(selectedLineId) &&
+        (!selectedLine?.directionStopIds?.[selectedDirection] ||
+          selectedLine.directionStopIds[selectedDirection]!.includes(stop.id)));
 
       // ---------------------------------------------------------------
       // LÁTHATÓSÁG
@@ -580,6 +582,7 @@ export function MapView() {
     }
   }, [
     selectedLineId,
+    selectedLine,
     selectedDirection,
     selectedStop,
     language,
@@ -682,62 +685,115 @@ export function MapView() {
           : 'Műhold'}
       </button>
 
-      {/* Kiválasztott járat információs sávja */}
-      {selectedLine && (
-        <div className="pointer-events-auto absolute left-4 top-4 z-10 flex max-w-[calc(100%-4rem)] items-center gap-2.5 rounded-2xl border border-[var(--border)] bg-[var(--panel)]/95 px-3.5 py-2.5 shadow-xl backdrop-blur-md transition-all">
-          <span
-            className="flex h-7 min-w-7 items-center justify-center rounded-xl font-black text-white shadow-xs"
-            style={{
-              backgroundColor:
-                selectedLine.color,
-            }}
-          >
-            {selectedLine.number}
-          </span>
+      {/* Kiválasztott járat információs és irányváltó sávja */}
+      {selectedLine && (() => {
+        const endpoints = getLineEndpoints(selectedLine, selectedDirection, language);
+        const hu = language === 'hu';
 
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-bold text-[var(--text-h)]">
-              {selectedLine.number}.{' '}
-              {language === 'hu'
-                ? 'busz'
-                : 'autobuz'}
-              : {lineName(selectedLine)}
-            </p>
+        return (
+          <div className="pointer-events-auto absolute left-4 top-4 z-10 flex max-w-[calc(100%-4.5rem)] flex-col gap-2 rounded-2xl border border-[var(--border)] bg-[var(--panel)]/95 p-3 shadow-xl backdrop-blur-md transition-all">
+            <div className="flex items-center gap-2.5">
+              <span
+                className="flex h-7 min-w-7 items-center justify-center rounded-xl font-black text-white shadow-xs"
+                style={{
+                  backgroundColor: selectedLine.color,
+                }}
+              >
+                {selectedLine.number}
+              </span>
 
-            <p className="text-[11px] text-[var(--text-muted)]">
-              {language === 'hu'
-                ? 'Kizárólag ennek az útvonalát mutatja'
-                : 'Afișează doar acest traseu'}
-            </p>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-bold text-[var(--text-h)]">
+                  {selectedLine.number}.{' '}
+                  {hu ? 'busz' : 'autobuz'}: {lineName(selectedLine)}
+                </p>
+
+                <p className="text-[11px] text-[var(--text-muted)]">
+                  {hu
+                    ? 'Kizárólag ennek az útvonalát mutatja'
+                    : 'Afișează doar acest traseu'}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedLineId(null)}
+                className="ml-1 flex h-7 w-7 items-center justify-center rounded-xl bg-[var(--surface)] text-[var(--text-muted)] transition hover:bg-[var(--border)] hover:text-[var(--text-h)]"
+                aria-label={
+                  hu
+                    ? 'Összes buszjárat mutatása'
+                    : 'Arată toate liniile'
+                }
+                title={
+                  hu
+                    ? 'Összes buszjárat mutatása'
+                    : 'Arată toate liniile'
+                }
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Direction flow with swap button */}
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)]/80 p-2 flex items-center justify-between gap-2 shadow-xs">
+              <div className="min-w-0 flex-1">
+                <div className="text-[9px] font-bold uppercase text-emerald-600">
+                  {hu ? 'Indulás' : 'Plecare'}
+                </div>
+                <div className="truncate text-xs font-bold text-[var(--text-h)]">
+                  {endpoints.start}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => toggleSelectedLineDirection()}
+                className="group flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white border border-[var(--border)] text-[var(--brand)] shadow-xs hover:bg-[var(--brand)] hover:text-white transition"
+                title={hu ? 'Menetirány megfordítása' : 'Schimbă sensul'}
+              >
+                <ArrowLeftRight className="h-3.5 w-3.5 transition group-hover:rotate-180" />
+              </button>
+
+              <div className="min-w-0 flex-1 text-right">
+                <div className="text-[9px] font-bold uppercase text-rose-600">
+                  {hu ? 'Érkezés' : 'Sosire'}
+                </div>
+                <div className="truncate text-xs font-bold text-[var(--text-h)]">
+                  {endpoints.end}
+                </div>
+              </div>
+            </div>
+
+            {/* Menetirány választó gombok a térképen */}
+            {selectedLine.directionNames && (
+              <div className="flex rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1 gap-1">
+                <button
+                  type="button"
+                  onClick={() => setSelectedDirection('outbound')}
+                  className={`flex-1 rounded-lg px-2 py-1 text-xs font-bold transition truncate ${
+                    selectedDirection === 'outbound'
+                      ? 'bg-[var(--brand)] text-white shadow-xs'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-h)] bg-white/50'
+                  }`}
+                >
+                  {selectedLine.directionNames.outbound[language]}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDirection('return')}
+                  className={`flex-1 rounded-lg px-2 py-1 text-xs font-bold transition truncate ${
+                    selectedDirection === 'return'
+                      ? 'bg-[var(--brand)] text-white shadow-xs'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-h)] bg-white/50'
+                  }`}
+                >
+                  {selectedLine.directionNames.return[language]}
+                </button>
+              </div>
+            )}
           </div>
-
-          <button
-            type="button"
-            onClick={() =>
-              setSelectedLineId(null)
-            }
-            className="ml-1 flex h-7 w-7 items-center justify-center rounded-xl bg-[var(--surface)] text-[var(--text-muted)] transition hover:bg-[var(--border)] hover:text-[var(--text-h)]"
-            aria-label={
-              language === 'hu'
-                ? 'Összes buszjárat mutatása'
-                : 'Arată toate liniile'
-            }
-            title={
-              language === 'hu'
-                ? 'Összes buszjárat mutatása'
-                : 'Arată toate liniile'
-            }
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      )}
-      {selectedLine?.id === 'line-5d' && (
-        <div className="absolute left-4 top-[5.25rem] z-10 flex overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] p-1 shadow-lg">
-          <button type="button" onClick={() => setSelectedDirection('outbound')} className={`rounded-lg px-3 py-1.5 text-xs font-bold ${selectedDirection === 'outbound' ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-muted)]'}`}>Multi-Trans felé</button>
-          <button type="button" onClick={() => setSelectedDirection('return')} className={`rounded-lg px-3 py-1.5 text-xs font-bold ${selectedDirection === 'return' ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-muted)]'}`}>József Attila felé</button>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

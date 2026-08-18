@@ -25,6 +25,7 @@ interface AppState {
   toggleLanguage: () => void;
   setSelectedLineId: (id: SelectedLineId) => void;
   setSelectedLineDirection: (direction: 'outbound' | 'return') => void;
+  toggleSelectedLineDirection: () => void;
   setSelectedStopId: (id: SelectedStopId) => void;
   setSearchQuery: (query: string) => void;
   requestFlyToStop: (id: string | null) => void;
@@ -58,6 +59,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ language: get().language === 'hu' ? 'ro' : 'hu' }),
   setSelectedLineId: (id) => set({ selectedLineId: id, selectedLineDirection: 'outbound' }),
   setSelectedLineDirection: (direction) => set({ selectedLineDirection: direction }),
+  toggleSelectedLineDirection: () =>
+    set({
+      selectedLineDirection:
+        get().selectedLineDirection === 'outbound' ? 'return' : 'outbound',
+    }),
   setSelectedStopId: (id) => set({ selectedStopId: id }),
   setSearchQuery: (query) => set({ searchQuery: query }),
   requestFlyToStop: (id) => set({ flyToStopId: id }),

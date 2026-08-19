@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowUpDown,
   LocateFixed,
+  Loader2,
   MapPin,
   Navigation,
   Footprints,
@@ -12,8 +13,9 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useBusData } from '../hooks/useBusData';
+import { useLocateUser } from '../hooks/useLocateUser';
 import { useAppStore } from '../store/useAppStore';
-import { findNearestStop, planTrip } from '../utils/tripPlanner';
+import { planTrip } from '../utils/tripPlanner';
 import { formatCountdown } from '../utils/timeUtils';
 
 function normalizeSearch(value: string) {
@@ -290,17 +292,11 @@ export function TripPlanner() {
     (s) => s.swapPlannerStops,
   );
 
-  const userLocation = useAppStore(
-    (s) => s.userLocation,
-  );
-
-  const setUserLocation = useAppStore(
-    (s) => s.setUserLocation,
-  );
-
   const requestFlyToStop = useAppStore(
     (s) => s.requestFlyToStop,
   );
+
+  const { isLocating, locateUser } = useLocateUser();
 
   const [useNow, setUseNow] = useState(true);
   const [departureTime, setDepartureTime] = useState(() => {
@@ -327,8 +323,9 @@ export function TripPlanner() {
         to: 'Érkezés',
         selectStop: 'Írj be egy megállót…',
         noResults: 'Nincs találat',
-        nearestStop:
-          'Legközelebbi megálló használata',
+        nearestStop: isLocating
+          ? 'Helyzet meghatározása…'
+          : 'Legközelebbi megálló használata',
         swap:
           'Indulás és érkezés felcserélése',
         direct: 'Közvetlen járat',
@@ -352,16 +349,15 @@ export function TripPlanner() {
           'Nincs elérhető útvonal a kiválasztott megállók között.',
         chooseStops:
           'Válassz ki egy indulási és egy érkezési megállót az útvonaltervezéshez!',
-        locateError:
-          'Nem sikerült meghatározni a helyzetet',
       }
       : {
         from: 'Plecare',
         to: 'Sosire',
         selectStop: 'Scrie o stație…',
         noResults: 'Nu există rezultate',
-        nearestStop:
-          'Folosește cea mai apropiată stație',
+        nearestStop: isLocating
+          ? 'Determinare locație…'
+          : 'Folosește cea mai apropiată stație',
         swap:
           'Inversează plecarea și sosirea',
         direct: 'Cursă directă',
@@ -385,55 +381,7 @@ export function TripPlanner() {
           'Nu există rute disponibile între stațiile selectate.',
         chooseStops:
           'Alege o stație de plecare și una de sosire pentru planificarea rutei!',
-        locateError:
-          'Nu s-a putut determina locația',
       };
-
-  const handleNearestStop = () => {
-    if (userLocation) {
-      const nearest = findNearestStop(
-        userLocation,
-        stops,
-      );
-
-      if (nearest) {
-        setPlannerOriginStopId(nearest.id);
-        requestFlyToStop(nearest.id);
-        return;
-      }
-    }
-
-    if (!navigator.geolocation) {
-      window.alert(t.locateError);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const loc = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-        };
-
-        setUserLocation(loc);
-
-        const nearest = findNearestStop(
-          loc,
-          stops,
-        );
-
-        if (nearest) {
-          setPlannerOriginStopId(nearest.id);
-          requestFlyToStop(nearest.id);
-        }
-      },
-      () => window.alert(t.locateError),
-      {
-        enableHighAccuracy: true,
-        timeout: 10_000,
-      },
-    );
-  };
 
   const handlePlan = () => {
     if (!plannerOriginStopId || !plannerDestinationStopId || isPlanning) return;
@@ -546,10 +494,22 @@ export function TripPlanner() {
         {/* NEAREST STOP */}
         <button
           type="button"
-          onClick={handleNearestStop}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--panel)] px-3 py-1.5 text-xs font-semibold text-[var(--text-h)] transition hover:border-[var(--brand)] hover:text-[var(--brand)]"
+          onClick={locateUser}
+          disabled={isLocating}
+          className={`
+            inline-flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition active:scale-[0.99]
+            ${
+              isLocating
+                ? 'border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--brand)]'
+                : 'border-[var(--border)] bg-[var(--panel)] text-[var(--text-h)] hover:border-[var(--brand)] hover:text-[var(--brand)]'
+            }
+          `}
         >
-          <LocateFixed className="h-3.5 w-3.5 text-[var(--brand)]" />
+          {isLocating ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--brand)]" />
+          ) : (
+            <LocateFixed className="h-3.5 w-3.5 text-[var(--brand)]" />
+          )}
           {t.nearestStop}
         </button>
 

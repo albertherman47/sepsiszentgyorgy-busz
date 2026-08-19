@@ -10,6 +10,7 @@ import {
 import { MapView } from './components/Map';
 import { Sidebar } from './components/Sidebar';
 import { FullScheduleModal } from './components/FullScheduleModal';
+import { ToastNotification } from './components/ToastNotification';
 import { useAppStore } from './store/useAppStore';
 import { useBusData } from './hooks/useBusData';
 
@@ -81,6 +82,7 @@ export default function App() {
         </main>
 
         <FullScheduleModal />
+        <ToastNotification />
       </div>
     );
   }
@@ -93,6 +95,9 @@ export default function App() {
 
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-[var(--bg)] select-none">
+      {/* Toast feedback */}
+      <ToastNotification />
+
       {/* Map layer */}
       <main className="absolute inset-0">
         <MapView />

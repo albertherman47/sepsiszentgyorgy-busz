@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ChevronUp,
   Filter,
+  Loader2,
   LocateFixed,
   MapPin,
   Navigation,
@@ -17,6 +18,7 @@ import { StopCard } from './StopCard';
 import { TripPlanner } from './TripPlanner';
 
 import { useBusData } from '../hooks/useBusData';
+import { useLocateUser } from '../hooks/useLocateUser';
 import { useAppStore } from '../store/useAppStore';
 
 interface SidebarProps {
@@ -33,6 +35,8 @@ export function Sidebar({
     stopName,
   } = useBusData();
 
+  const { isLocating, locateUser } = useLocateUser();
+
   const searchQuery = useAppStore((s) => s.searchQuery);
   const setSearchQuery = useAppStore((s) => s.setSearchQuery);
 
@@ -46,10 +50,6 @@ export function Sidebar({
 
   const requestFlyToStop = useAppStore(
     (s) => s.requestFlyToStop,
-  );
-
-  const setUserLocation = useAppStore(
-    (s) => s.setUserLocation,
   );
 
   const activeTab = useAppStore(
@@ -77,8 +77,7 @@ export function Sidebar({
 
         stops: 'Megállók',
 
-        locate: 'Saját helyzet',
-        locateError: 'Nem sikerült meghatározni a helyzetet',
+        locate: isLocating ? 'Helyzet meghatározása…' : 'Saját helyzet',
         filterToggleShow: 'Keresés megjelenítése',
         filterToggleHide: 'Keresés elrejtése',
         backToList: 'Vissza a megállókhoz',
@@ -95,33 +94,11 @@ export function Sidebar({
 
         stops: 'Stații',
 
-        locate: 'Locația mea',
-        locateError: 'Nu s-a putut determina locația',
+        locate: isLocating ? 'Determinare locație…' : 'Locația mea',
         filterToggleShow: 'Afișează căutarea',
         filterToggleHide: 'Ascunde căutarea',
         backToList: 'Înapoi la stații',
       };
-
-  const handleLocate = () => {
-    if (!navigator.geolocation) {
-      window.alert(t.locateError);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setUserLocation({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-        });
-      },
-      () => window.alert(t.locateError),
-      {
-        enableHighAccuracy: true,
-        timeout: 10_000,
-      },
-    );
-  };
 
   const handleStopClick = (stopId: string) => {
     setSelectedStopId(stopId);
@@ -293,8 +270,9 @@ export function Sidebar({
               {activeTab === 'stops' && (
                 <button
                   type="button"
-                  onClick={handleLocate}
-                  className="
+                  onClick={locateUser}
+                  disabled={isLocating}
+                  className={`
                     inline-flex w-full items-center
                     justify-center gap-2
                     rounded-xl border
@@ -302,14 +280,19 @@ export function Sidebar({
                     bg-white
                     px-3 py-2.5
                     text-xs font-bold
-                    text-[var(--text-h)]
-                    transition
-                    hover:border-[var(--brand)]
-                    hover:bg-[var(--brand-soft)]
-                    hover:text-[var(--brand)]
-                  "
+                    transition active:scale-[0.99]
+                    ${
+                      isLocating
+                        ? 'border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--brand)]'
+                        : 'text-[var(--text-h)] hover:border-[var(--brand)] hover:bg-[var(--brand-soft)] hover:text-[var(--brand)]'
+                    }
+                  `}
                 >
-                  <LocateFixed className="h-4 w-4" />
+                  {isLocating ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-[var(--brand)]" />
+                  ) : (
+                    <LocateFixed className="h-4 w-4 text-[var(--brand)]" />
+                  )}
 
                   {t.locate}
                 </button>

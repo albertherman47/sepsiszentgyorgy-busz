@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeftRight, Layers, X } from 'lucide-react';
+import { ArrowLeftRight, Layers, Loader2, LocateFixed, X } from 'lucide-react';
 import {
   LngLatBounds,
   Map as MapLibreMap,
@@ -13,6 +13,7 @@ import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&ur
 import { CITY_CENTER, DEFAULT_ZOOM, getStopById, lines, stops } from '../data/busData';
 import { useAppStore } from '../store/useAppStore';
 import { getLineEndpoints, useBusData } from '../hooks/useBusData';
+import { useLocateUser } from '../hooks/useLocateUser';
 
 setWorkerUrl(maplibreWorkerUrl);
 
@@ -113,6 +114,7 @@ export function MapView() {
   const userMarkerRef = useRef<MarkerType | null>(null);
 
   const [isSatellite, setIsSatellite] = useState(false);
+  const { isLocating, locateUser } = useLocateUser();
 
   const {
     language,
@@ -627,7 +629,7 @@ export function MapView() {
       el.className = 'user-location-marker';
 
       el.style.cssText =
-        'width:16px;height:16px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 6px rgba(37,99,235,0.25);transition:all 0.3s ease;';
+        'width:18px;height:18px;border-radius:50%;background:#0284c7;border:3px solid #ffffff;box-shadow:0 0 0 6px rgba(2,132,199,0.35), 0 4px 12px rgba(15,23,42,0.3);position:relative;z-index:90;';
 
       marker = new Marker({
         element: el,
@@ -651,8 +653,8 @@ export function MapView() {
         userLocation.lng,
         userLocation.lat,
       ],
-      zoom: Math.max(map.getZoom(), 14),
-      speed: 1.1,
+      zoom: Math.max(map.getZoom(), 14.5),
+      speed: 1.2,
       essential: true,
     });
   }, [userLocation]);
@@ -668,22 +670,45 @@ export function MapView() {
         className="h-full w-full"
       />
 
-      {/* Szatelit váltógomb */}
-      <button
-        type="button"
-        onClick={() =>
-          setIsSatellite((prev) => !prev)
-        }
-        className="absolute right-3 top-14 z-10 flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--panel)] px-3 py-2 text-xs font-semibold text-[var(--text-h)] shadow-md transition hover:bg-[var(--surface)]"
-      >
-        <Layers
-          className="h-4 w-4"
-        />
+      {/* Floating Map Action Controls (Top Right) */}
+      <div className="absolute right-3 top-14 z-10 flex flex-col gap-2">
+        {/* Szatelit váltógomb */}
+        <button
+          type="button"
+          onClick={() =>
+            setIsSatellite((prev) => !prev)
+          }
+          className="flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--panel)] px-3 py-2 text-xs font-bold text-[var(--text-h)] shadow-md backdrop-blur-md transition hover:bg-[var(--surface)] active:scale-95"
+          title={isSatellite ? (language === 'hu' ? 'Utcatérkép nézet' : 'Hartă străzi') : (language === 'hu' ? 'Műholdas nézet' : 'Vedere satelit')}
+        >
+          <Layers className="h-4 w-4 text-[var(--brand)]" />
+          <span>{isSatellite ? (language === 'hu' ? 'Térkép' : 'Hartă') : (language === 'hu' ? 'Műhold' : 'Satelit')}</span>
+        </button>
 
-        {isSatellite
-          ? 'Utcatérkép'
-          : 'Műhold'}
-      </button>
+        {/* Saját GPS Helyzet gomb a térképen */}
+        <button
+          type="button"
+          onClick={locateUser}
+          disabled={isLocating}
+          className={`
+            flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold shadow-md backdrop-blur-md transition active:scale-95
+            ${
+              userLocation
+                ? 'border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--brand)]'
+                : 'border-[var(--border)] bg-[var(--panel)] text-[var(--text-h)] hover:bg-[var(--surface)]'
+            }
+          `}
+          title={language === 'hu' ? 'Saját helyzet meghatározása' : 'Locația mea'}
+          aria-label={language === 'hu' ? 'Saját helyzet' : 'Locația mea'}
+        >
+          {isLocating ? (
+            <Loader2 className="h-4 w-4 animate-spin text-[var(--brand)]" />
+          ) : (
+            <LocateFixed className={`h-4 w-4 ${userLocation ? 'text-[var(--brand)] animate-pulse' : 'text-[var(--brand)]'}`} />
+          )}
+          <span>{language === 'hu' ? 'Helyzetem' : 'Poziție'}</span>
+        </button>
+      </div>
 
       {/* Kiválasztott járat információs és irányváltó sávja */}
       {selectedLine && (() => {

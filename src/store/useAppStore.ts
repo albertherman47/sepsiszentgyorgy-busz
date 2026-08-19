@@ -21,6 +21,9 @@ interface AppState {
   // Full schedule modal state
   fullScheduleStopId: string | null;
 
+  // Geolocation toast feedback
+  geoToast: { message: string; type: 'info' | 'success' | 'error' } | null;
+
   setLanguage: (language: Language) => void;
   toggleLanguage: () => void;
   setSelectedLineId: (id: SelectedLineId) => void;
@@ -37,6 +40,7 @@ interface AppState {
   setSelectedTripOption: (option: TripOption | null) => void;
   swapPlannerStops: () => void;
   setFullScheduleStopId: (id: string | null) => void;
+  setGeoToast: (toast: { message: string; type: 'info' | 'success' | 'error' } | null) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -53,6 +57,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   plannerDestinationStopId: null,
   selectedTripOption: null,
   fullScheduleStopId: null,
+  geoToast: null,
 
   setLanguage: (language) => set({ language }),
   toggleLanguage: () =>
@@ -81,4 +86,5 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
   setFullScheduleStopId: (id) => set({ fullScheduleStopId: id }),
+  setGeoToast: (toast) => set({ geoToast: toast }),
 }));

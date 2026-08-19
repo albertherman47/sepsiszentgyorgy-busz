@@ -160,12 +160,6 @@ export function TimetableManagement() {
     );
   }, [stopTimetables, stopSearch]);
 
-  // Helper: check if a time is in peak hours (07:00-08:59, 15:00-16:59)
-  const isPeakHour = (timeStr: string) => {
-    const [h] = timeStr.split(':').map(Number);
-    return (h >= 7 && h < 9) || (h >= 15 && h < 17);
-  };
-
   // Navigate to stop on map
   const handleStopClick = (stop: Stop) => {
     setSelectedLineId(activeLine.id);
@@ -442,51 +436,21 @@ export function TimetableManagement() {
 
                   {/* Structured Departures by Hour */}
                   <div className="flex flex-col gap-2.5">
-                    <div className="text-xs font-extrabold uppercase tracking-wider text-[#73796D] flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 text-[#657933]" />
-                      <span>{hu ? 'Indulási / érkezési időpontok ennél a megállónál:' : 'Ore de sosire / plecare la această stație:'}</span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 pt-1">
-                      {Object.entries(item.byHour).map(([hour, timesInHour]) => {
-                        const hourNum = parseInt(hour, 10);
-                        const isPeak = (hourNum >= 7 && hourNum < 9) || (hourNum >= 15 && hourNum < 17);
-
-                        return (
+                    <div className="pt-2">
+                      <div className="text-xs font-bold uppercase tracking-wider text-[#73796D] mb-3 pb-2 border-b border-[#ecefe2]">
+                        {hu ? 'Napi indulási időpontok' : 'Ore de plecare zilnice'}
+                      </div>
+                      
+                      <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2.5">
+                        {Object.values(item.byHour).flat().map((t, idx) => (
                           <div
-                            key={hour}
-                            className={`
-                              p-3 rounded-xl border flex items-center gap-3 transition-colors
-                              ${
-                                isPeak
-                                  ? 'bg-[#d4ec98]/20 border-[#657933]/40'
-                                  : 'bg-[#F7F8F4] border-[#DDE1D6]'
-                              }
-                            `}
+                            key={idx}
+                            className="bg-[#F7F8F4] border border-[#DDE1D6] rounded-lg py-2 text-center text-sm font-bold text-[#191d15] shadow-2xs hover:border-[#657933] hover:bg-white transition-colors cursor-default"
                           >
-                            <span className="text-sm font-black text-[#191d15] w-8 shrink-0">
-                              {hour}:00
-                            </span>
-                            <div className="flex flex-wrap gap-1.5 flex-1">
-                              {timesInHour.map((t) => (
-                                <span
-                                  key={t}
-                                  className={`
-                                    px-2.5 py-1 rounded-lg text-xs md:text-sm font-extrabold shadow-2xs
-                                    ${
-                                      isPeak
-                                        ? 'bg-[#657933] text-white'
-                                        : 'bg-white text-[#191d15] border border-[#DDE1D6]'
-                                    }
-                                  `}
-                                >
-                                  {t}
-                                </span>
-                              ))}
-                            </div>
+                            {t}
                           </div>
-                        );
-                      })}
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -513,20 +477,14 @@ export function TimetableManagement() {
                   <th className="p-4 font-extrabold min-w-[220px] sticky left-0 bg-[#f2f5e8] border-r border-[#DDE1D6] z-10">
                     {hu ? 'Megállók sorrendben' : 'Stații în ordine'}
                   </th>
-                  {baseTimes.map((time, colIdx) => {
-                    const peak = isPeakHour(time);
-                    return (
-                      <th
-                        key={`${time}-${colIdx}`}
-                        className={`
-                          p-3.5 font-black text-center w-20 text-xs md:text-sm transition-colors
-                          ${peak ? 'bg-[#d4ec98]/40 text-[#4d601d]' : 'text-[#191d15]'}
-                        `}
-                      >
-                        {time}
-                      </th>
-                    );
-                  })}
+                  {baseTimes.map((time, colIdx) => (
+                    <th
+                      key={`${time}-${colIdx}`}
+                      className="p-3.5 font-black text-center w-20 text-xs md:text-sm text-[#191d15] bg-[#f2f5e8] border-b border-[#DDE1D6]"
+                    >
+                      {time}
+                    </th>
+                  ))}
                 </tr>
               </thead>
 
@@ -548,24 +506,14 @@ export function TimetableManagement() {
                       </td>
 
                       {/* Departures for each trip */}
-                      {row.departures.map((t, tIdx) => {
-                        const peak = isPeakHour(baseTimes[tIdx]);
-                        return (
-                          <td
-                            key={tIdx}
-                            className={`
-                              p-3 text-center transition-colors font-bold
-                              ${
-                                peak
-                                  ? 'bg-[#d4ec98]/15 font-black text-[#4d601d]'
-                                  : 'text-[#191d15]'
-                              }
-                            `}
-                          >
-                            {t}
-                          </td>
-                        );
-                      })}
+                      {row.departures.map((t, tIdx) => (
+                        <td
+                          key={tIdx}
+                          className="p-3 text-center font-bold text-[#191d15]"
+                        >
+                          {t}
+                        </td>
+                      ))}
                     </tr>
                   );
                 })}
@@ -576,24 +524,13 @@ export function TimetableManagement() {
       )}
 
       {/* 6. Bottom Legend */}
-      <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-white rounded-2xl border border-[#DDE1D6] text-xs md:text-sm text-[#73796D]">
-        <div className="flex items-center gap-2 font-medium">
-          <Clock className="h-4 w-4 text-[#657933]" />
-          <span>
-            {hu
-              ? `A(z) ${activeLine.number}. járat menetrendje ${activeDayType === 'weekday' ? 'hétköznapokon' : activeDayType === 'saturday' ? 'szombaton' : 'vasárnap / ünnepnapokon'}.`
-              : `Orarul liniei ${activeLine.number} în zilele selectate.`}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-md bg-[#657933] text-white flex items-center justify-center text-[10px] font-black">
-            ★
-          </div>
-          <span className="font-bold text-[#191d15]">
-            {hu ? 'Kiemelt csúcsidőszak (07:00 – 09:00 & 15:00 – 17:00)' : 'Ore de vârf (07:00 – 09:00 & 15:00 – 17:00)'}
-          </span>
-        </div>
+      <div className="flex items-center gap-2 p-4 bg-white rounded-2xl border border-[#DDE1D6] text-xs md:text-sm text-[#73796D] font-medium">
+        <Clock className="h-4 w-4 text-[#657933]" />
+        <span>
+          {hu
+            ? `A(z) ${activeLine.number}. járat menetrendje ${activeDayType === 'weekday' ? 'hétköznapokon' : activeDayType === 'saturday' ? 'szombaton' : 'vasárnap / ünnepnapokon'}.`
+            : `Orarul liniei ${activeLine.number} în zilele selectate.`}
+        </span>
       </div>
     </div>
   );

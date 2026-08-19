@@ -1,7 +1,13 @@
 import { create } from 'zustand';
 import type { Language, SelectedLineId, SelectedStopId, TripOption } from '../types/bus';
 
-export type ActiveTab = 'stops' | 'lines' | 'planner';
+export type ActiveTab =
+  | 'dashboard'
+  | 'lines'
+  | 'schedules'
+  | 'stops'
+  | 'map'
+  | 'planner';
 
 interface AppState {
   language: Language;
@@ -21,6 +27,9 @@ interface AppState {
   // Full schedule modal state
   fullScheduleStopId: string | null;
 
+  // Sidebar collapse state
+  sidebarCollapsed: boolean;
+
   // Geolocation toast feedback
   geoToast: { message: string; type: 'info' | 'success' | 'error' } | null;
 
@@ -34,6 +43,8 @@ interface AppState {
   requestFlyToStop: (id: string | null) => void;
   setUserLocation: (loc: { lat: number; lng: number } | null) => void;
   setActiveTab: (tab: ActiveTab) => void;
+  toggleSidebar: () => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
 
   setPlannerOriginStopId: (id: string | null) => void;
   setPlannerDestinationStopId: (id: string | null) => void;
@@ -57,6 +68,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   plannerDestinationStopId: null,
   selectedTripOption: null,
   fullScheduleStopId: null,
+  sidebarCollapsed: false,
   geoToast: null,
 
   setLanguage: (language) => set({ language }),
@@ -74,6 +86,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   requestFlyToStop: (id) => set({ flyToStopId: id }),
   setUserLocation: (loc) => set({ userLocation: loc }),
   setActiveTab: (tab) => set({ activeTab: tab }),
+  toggleSidebar: () => set({ sidebarCollapsed: !get().sidebarCollapsed }),
+  setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
 
   setPlannerOriginStopId: (id) => set({ plannerOriginStopId: id }),
   setPlannerDestinationStopId: (id) => set({ plannerDestinationStopId: id }),

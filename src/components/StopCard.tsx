@@ -96,46 +96,40 @@ export function StopCard({
       }
     >
       {/* Top Header Card */}
-      <div className="border-b border-[var(--border)] bg-white px-4 pb-3 pt-3 shadow-xs">
+      <div className="border-b border-[var(--border)] bg-white px-4 pb-3.5 pt-3.5 shadow-xs">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <div className="mb-1 flex items-center gap-1.5">
-              <span className="flex h-2 w-2 rounded-full bg-[var(--brand)] animate-pulse" />
-              <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--text-muted)]">
-                {hu ? 'Kiválasztott megálló' : 'Stație selectată'}
-              </span>
-              <span className="rounded-md bg-[var(--surface)] px-1.5 py-0.5 text-[9px] font-bold text-[var(--text-muted)]">
-                {selectedStop.lineIds.length} {hu ? 'járat' : 'linii'}
-              </span>
-            </div>
-
-            <h2 className="truncate font-[family-name:var(--font-display)] text-lg sm:text-xl font-black tracking-tight text-[var(--text-h)]">
+            <h2 className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-black tracking-tight text-[var(--text-h)] leading-tight">
               {title}
             </h2>
+            <div className="mt-1 flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 text-xs font-bold text-[var(--text-muted)]">
+                <MapPin className="h-3.5 w-3.5 text-[var(--brand)]" />
+                {selectedStop.lineIds.length} {hu ? 'érintett járat' : 'linii deservite'}
+              </span>
+            </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-2">
             {/* Full Schedule Modal Button */}
             <button
               type="button"
               onClick={() => setFullScheduleStopId(selectedStop.id)}
               className="
-                inline-flex h-9 items-center gap-1.5
-                rounded-xl border border-[var(--border)]
-                bg-[var(--surface)] px-2.5
-                text-xs font-bold text-[var(--text-h)]
+                inline-flex h-10 items-center gap-1.5
+                rounded-xl border-2 border-[var(--border)]
+                bg-[#ecefe2] px-3
+                text-xs font-black text-[#191d15]
                 transition-all
                 hover:border-[var(--brand)]
                 hover:bg-[var(--brand-soft)]
                 hover:text-[var(--brand)]
-                active:scale-95
+                active:scale-95 cursor-pointer
               "
-              title={hu ? 'Teljes napi menetrend megnyitása' : 'Orar complet'}
+              title={hu ? 'Teljes menetrend megnyitása' : 'Orar complet'}
             >
               <CalendarDays className="h-4 w-4 text-[var(--brand)]" />
-              <span className="hidden sm:inline text-[11px]">
-                {hu ? 'Menetrend' : 'Orar'}
-              </span>
+              <span>{hu ? 'Menetrend' : 'Orar'}</span>
             </button>
 
             {/* Close Button */}
@@ -143,17 +137,17 @@ export function StopCard({
               type="button"
               onClick={() => setSelectedStopId(null)}
               className="
-                flex h-9 w-9
+                flex h-10 w-10
                 items-center justify-center
-                rounded-xl border border-transparent
+                rounded-xl border-2 border-[var(--border)]
                 bg-[var(--surface)] text-[var(--text-muted)]
                 transition-all
-                hover:bg-rose-50 hover:text-rose-600
-                active:scale-90
+                hover:bg-rose-50 hover:border-rose-300 hover:text-rose-600
+                active:scale-90 cursor-pointer
               "
               aria-label={hu ? 'Bezárás' : 'Închide'}
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </button>
           </div>
         </div>

@@ -50,19 +50,18 @@ function StopSearch({
   const [inputValue, setInputValue] = useState(
     selectedStop ? stopName(selectedStop) : '',
   );
+  const [prevValue, setPrevValue] = useState(value);
+
+  // Sync state during render if value changed externally
+  if (value !== prevValue) {
+    setPrevValue(value);
+    setInputValue(selectedStop ? stopName(selectedStop) : '');
+  }
 
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
-
-  // Ha kívülről változik a stop:
-  // nearest stop vagy swap esetén frissítjük az inputot.
-  useEffect(() => {
-    setInputValue(
-      selectedStop ? stopName(selectedStop) : '',
-    );
-  }, [selectedStop, stopName]);
 
   const filteredStops = useMemo(() => {
     const query = normalizeSearch(inputValue.trim());

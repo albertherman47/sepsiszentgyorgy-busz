@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeftRight, Layers, Loader2, LocateFixed, X } from 'lucide-react';
+import { Layers, Loader2, LocateFixed } from 'lucide-react';
 import {
   LngLatBounds,
   Map as MapLibreMap,
@@ -12,7 +12,7 @@ import {
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { CITY_CENTER, DEFAULT_ZOOM, getStopById, lines, stops } from '../data/busData';
 import { useAppStore } from '../store/useAppStore';
-import { getLineEndpoints, useBusData } from '../hooks/useBusData';
+import { useBusData } from '../hooks/useBusData';
 import { useLocateUser } from '../hooks/useLocateUser';
 
 setWorkerUrl(maplibreWorkerUrl);
@@ -91,15 +91,16 @@ function updateStopMarkerElement(
 ) {
   btn.setAttribute('aria-label', stopName);
   btn.title = stopName;
-  btn.style.zIndex = active ? '20' : '1';
+  btn.style.zIndex = active ? '30' : '1';
 
   const visual = btn.firstChild as HTMLDivElement;
 
   if (visual) {
-    visual.style.backgroundColor = color;
-    visual.style.transform = active ? 'scale(1.5)' : 'scale(1)';
+    visual.style.backgroundColor = active ? '#657933' : color;
+    visual.style.transform = active ? 'scale(1.7)' : 'scale(1)';
+    visual.style.border = active ? '3px solid #ffffff' : '2.5px solid #ffffff';
     visual.style.boxShadow = active
-      ? `0 0 0 5px ${color}45, 0 4px 12px rgba(15,23,42,0.4)`
+      ? '0 0 0 7px rgba(101, 121, 51, 0.45), 0 6px 16px rgba(15,23,42,0.4)'
       : '0 1.5px 5px rgba(15,23,42,0.35)';
   }
 }
@@ -119,17 +120,13 @@ export function MapView() {
   const {
     language,
     stopName,
-    lineName,
     selectedLineId,
     selectedLine,
     selectedStop,
   } = useBusData();
 
   const setSelectedStopId = useAppStore((s) => s.setSelectedStopId);
-  const setSelectedLineId = useAppStore((s) => s.setSelectedLineId);
   const selectedDirection = useAppStore((s) => s.selectedLineDirection);
-  const setSelectedDirection = useAppStore((s) => s.setSelectedLineDirection);
-  const toggleSelectedLineDirection = useAppStore((s) => s.toggleSelectedLineDirection);
 
   useEffect(() => {
   const map = mapRef.current;
@@ -217,13 +214,25 @@ export function MapView() {
     map.on('load', addBusRoutesLayer);
     map.on('styledata', addBusRoutesLayer);
 
+    const resizeObserver = new ResizeObserver(() => {
+      if (mapRef.current) {
+        mapRef.current.resize();
+      }
+    });
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    const markers = markersRef.current;
+
     return () => {
+      resizeObserver.disconnect();
+
       // Minden marker eltávolítása
-      markersRef.current.forEach((marker) => {
+      markers.forEach((marker) => {
         marker.remove();
       });
-
-      markersRef.current.clear();
+      markers.clear();
 
       map.remove();
 
@@ -429,6 +438,8 @@ export function MapView() {
     const map = mapRef.current;
 
     if (!map || !selectedLineId) return;
+    // Ha megálló van kiválasztva vagy ráközelítés zajlik, ne méretezzük vissza a teljes vonalra
+    if (selectedStop || flyToStopId) return;
 
     const activeLine = lines.find(
       (line) => line.id === selectedLineId,
@@ -456,7 +467,7 @@ export function MapView() {
       maxZoom: 15,
       duration: 750,
     });
-  }, [selectedLineId]);
+  }, [selectedLineId, selectedStop, flyToStopId]);
   // ---------------------------------------------------------------------------
   // 5. MEGÁLLÓ MARKEREK LÉTREHOZÁSA
   //
@@ -602,15 +613,22 @@ export function MapView() {
 
     if (!stop) return;
 
-    map.flyTo({
-      center: [stop.lng, stop.lat],
-      zoom: Math.max(map.getZoom(), 14.5),
-      speed: 1.2,
-      curve: 1.4,
-      essential: true,
-    });
+    const doFly = () => {
+      map.flyTo({
+        center: [stop.lng, stop.lat],
+        zoom: 16,
+        speed: 1.4,
+        curve: 1.2,
+        essential: true,
+      });
+      requestFlyToStop(null);
+    };
 
-    requestFlyToStop(null);
+    if (map.loaded()) {
+      doFly();
+    } else {
+      map.once('load', doFly);
+    }
   }, [flyToStopId, requestFlyToStop]);
 
   // ---------------------------------------------------------------------------
@@ -709,116 +727,6 @@ export function MapView() {
           <span>{language === 'hu' ? 'Helyzetem' : 'Poziție'}</span>
         </button>
       </div>
-
-      {/* Kiválasztott járat információs és irányváltó sávja */}
-      {selectedLine && (() => {
-        const endpoints = getLineEndpoints(selectedLine, selectedDirection, language);
-        const hu = language === 'hu';
-
-        return (
-          <div className="pointer-events-auto absolute left-4 top-4 z-10 flex max-w-[calc(100%-4.5rem)] flex-col gap-2 rounded-2xl border border-[var(--border)] bg-[var(--panel)]/95 p-3 shadow-xl backdrop-blur-md transition-all">
-            <div className="flex items-center gap-2.5">
-              <span
-                className="flex h-7 min-w-7 items-center justify-center rounded-xl font-black text-white shadow-xs"
-                style={{
-                  backgroundColor: selectedLine.color,
-                }}
-              >
-                {selectedLine.number}
-              </span>
-
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-bold text-[var(--text-h)]">
-                  {selectedLine.number}.{' '}
-                  {hu ? 'busz' : 'autobuz'}: {lineName(selectedLine)}
-                </p>
-
-                <p className="text-[11px] text-[var(--text-muted)]">
-                  {hu
-                    ? 'Kizárólag ennek az útvonalát mutatja'
-                    : 'Afișează doar acest traseu'}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setSelectedLineId(null)}
-                className="ml-1 flex h-7 w-7 items-center justify-center rounded-xl bg-[var(--surface)] text-[var(--text-muted)] transition hover:bg-[var(--border)] hover:text-[var(--text-h)]"
-                aria-label={
-                  hu
-                    ? 'Összes buszjárat mutatása'
-                    : 'Arată toate liniile'
-                }
-                title={
-                  hu
-                    ? 'Összes buszjárat mutatása'
-                    : 'Arată toate liniile'
-                }
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Direction flow with swap button */}
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)]/80 p-2 flex items-center justify-between gap-2 shadow-xs">
-              <div className="min-w-0 flex-1">
-                <div className="text-[9px] font-bold uppercase text-emerald-600">
-                  {hu ? 'Indulás' : 'Plecare'}
-                </div>
-                <div className="truncate text-xs font-bold text-[var(--text-h)]">
-                  {endpoints.start}
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => toggleSelectedLineDirection()}
-                className="group flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white border border-[var(--border)] text-[var(--brand)] shadow-xs hover:bg-[var(--brand)] hover:text-white transition"
-                title={hu ? 'Menetirány megfordítása' : 'Schimbă sensul'}
-              >
-                <ArrowLeftRight className="h-3.5 w-3.5 transition group-hover:rotate-180" />
-              </button>
-
-              <div className="min-w-0 flex-1 text-right">
-                <div className="text-[9px] font-bold uppercase text-rose-600">
-                  {hu ? 'Érkezés' : 'Sosire'}
-                </div>
-                <div className="truncate text-xs font-bold text-[var(--text-h)]">
-                  {endpoints.end}
-                </div>
-              </div>
-            </div>
-
-            {/* Menetirány választó gombok a térképen */}
-            {selectedLine.directionNames && (
-              <div className="flex rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1 gap-1">
-                <button
-                  type="button"
-                  onClick={() => setSelectedDirection('outbound')}
-                  className={`flex-1 rounded-lg px-2 py-1 text-xs font-bold transition truncate ${
-                    selectedDirection === 'outbound'
-                      ? 'bg-[var(--brand)] text-white shadow-xs'
-                      : 'text-[var(--text-muted)] hover:text-[var(--text-h)] bg-white/50'
-                  }`}
-                >
-                  {selectedLine.directionNames.outbound[language]}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedDirection('return')}
-                  className={`flex-1 rounded-lg px-2 py-1 text-xs font-bold transition truncate ${
-                    selectedDirection === 'return'
-                      ? 'bg-[var(--brand)] text-white shadow-xs'
-                      : 'text-[var(--text-muted)] hover:text-[var(--text-h)] bg-white/50'
-                  }`}
-                >
-                  {selectedLine.directionNames.return[language]}
-                </button>
-              </div>
-            )}
-          </div>
-        );
-      })()}
     </div>
   );
 }

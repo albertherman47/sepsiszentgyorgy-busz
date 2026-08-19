@@ -1,261 +1,140 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  Maximize2,
-  Minimize2,
-  Radio,
+  Compass,
 } from 'lucide-react';
 import { MapView } from './components/Map';
-import { Sidebar } from './components/Sidebar';
+import { MapLineSelector } from './components/MapLineSelector';
+import { DashboardView } from './components/DashboardView';
+import { LinesView } from './components/LinesView';
+import { SideNavBar } from './components/SideNavBar';
+import { TopNavBar } from './components/TopNavBar';
+import { BottomNavBar } from './components/BottomNavBar';
+import { TimetableManagement } from './components/TimetableManagement';
+import { StopList } from './components/StopList';
+import { StopCard } from './components/StopCard';
+import { TripPlanner } from './components/TripPlanner';
 import { FullScheduleModal } from './components/FullScheduleModal';
 import { ToastNotification } from './components/ToastNotification';
 import { useAppStore } from './store/useAppStore';
 import { useBusData } from './hooks/useBusData';
 
-function useIsDesktop(breakpoint = 900) {
-  const [isDesktop, setIsDesktop] = useState(() =>
-    typeof window !== 'undefined'
-      ? window.matchMedia(`(min-width: ${breakpoint}px)`).matches
-      : true,
-  );
-
-  useEffect(() => {
-    const mq = window.matchMedia(`(min-width: ${breakpoint}px)`);
-
-    const onChange = () => {
-      setIsDesktop(mq.matches);
-    };
-
-    onChange();
-    mq.addEventListener('change', onChange);
-
-    return () => {
-      mq.removeEventListener('change', onChange);
-    };
-  }, [breakpoint]);
-
-  return isDesktop;
-}
-
 export default function App() {
-  const isDesktop = useIsDesktop();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const selectedStopId = useAppStore((s) => s.selectedStopId);
   const activeTab = useAppStore((s) => s.activeTab);
-  const { language, selectedStop, stopName, upcomingByLine } = useBusData();
+  const sidebarCollapsed = useAppStore((s) => s.sidebarCollapsed);
 
-  // Mobile sheet height snap states: 'min' (~56px peek), 'half' (~50dvh), 'full' (~88dvh)
-  const [sheetState, setSheetState] = useState<'min' | 'half' | 'full'>('half');
-
-  // When a stop is selected on map/list, automatically bring up the sheet to half or full
-  useEffect(() => {
-    if (selectedStopId) {
-      setSheetState((prev) => (prev === 'min' ? 'half' : prev));
-    }
-  }, [selectedStopId]);
-
-  if (isDesktop) {
-    return (
-      <div className="app-shell flex h-dvh w-full overflow-hidden bg-[var(--bg)]">
-        <Sidebar mode="desktop" />
-
-        <main className="relative min-h-0 min-w-0 flex-1 p-3 lg:p-4">
-          <div className="map-stage relative h-full overflow-hidden rounded-[24px] border border-white/80 bg-white shadow-[0_20px_60px_rgba(15,35,55,0.12)]">
-            <MapView />
-
-            {/* Live indicator */}
-            <div className="absolute bottom-5 right-5 z-10 hidden items-center gap-2 rounded-xl border border-white/80 bg-white/90 px-3 py-2 text-[10px] font-bold text-[var(--text-h)] shadow-[0_8px_24px_rgba(15,35,55,0.12)] backdrop-blur-md md:flex">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-              </span>
-
-              <Radio className="h-3.5 w-3.5 text-[var(--brand)]" />
-
-              {language === 'hu'
-                ? 'Valós idejű adatok'
-                : 'Date în timp real'}
-            </div>
-          </div>
-        </main>
-
-        <FullScheduleModal />
-        <ToastNotification />
-      </div>
-    );
-  }
-
-  // Next upcoming bus summary for mobile peek bar
-  const firstUpcoming = upcomingByLine[0]?.upcoming[0];
-  const firstUpcomingLine = upcomingByLine[0]?.line;
-
+  const { language, selectedStop } = useBusData();
   const hu = language === 'hu';
 
+  // Full-screen map condition
+  const isMapView = activeTab === 'map';
+
   return (
-    <div className="relative h-dvh w-full overflow-hidden bg-[var(--bg)] select-none">
-      {/* Toast feedback */}
+    <div className="bg-[#F7F8F4] text-[#191d15] min-h-screen flex font-sans antialiased text-sm pb-20 md:pb-0">
+      {/* Toast Feedback */}
       <ToastNotification />
 
-      {/* Map layer */}
-      <main className="absolute inset-0">
-        <MapView />
-      </main>
+      {/* Full Timetable Modal */}
+      <FullScheduleModal />
 
-      {/* Mobile Multi-Height Collapsible Bottom Sheet */}
-      <div
-        className={`
-          absolute inset-x-0 bottom-0 z-30 flex flex-col overflow-hidden
-          rounded-t-[28px] border-t-2 border-x border-[var(--border)]
-          bg-[var(--panel)] shadow-[0_-14px_45px_rgba(15,23,42,0.22)]
-          transition-all duration-300 ease-out
-          ${
-            sheetState === 'min'
-              ? 'h-16 max-h-16'
-              : sheetState === 'half'
-                ? 'h-[52dvh] max-h-[52dvh]'
-                : 'h-[88dvh] max-h-[88dvh]'
-          }
-        `}
-      >
-        {/* Interactive Handle & Snap Control Header */}
+      {/* Mobile Drawer Overlay */}
+      {mobileMenuOpen && (
         <div
-          onClick={() => {
-            if (sheetState === 'min') setSheetState('half');
-          }}
-          className="
-            flex w-full shrink-0 items-center justify-between
-            border-b border-[var(--border)] bg-white px-3.5 py-2
-            cursor-pointer
-          "
-        >
-          {/* Left summary / stop indicator in peek mode */}
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSheetState((prev) => (prev === 'min' ? 'half' : 'min'));
-              }}
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--surface)] text-[var(--brand)] hover:bg-[var(--brand-soft)]"
-              aria-label={sheetState === 'min' ? 'Kinyitás' : 'Összecsukás'}
-            >
-              {sheetState === 'min' ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
-            </button>
+          className="fixed inset-0 bg-black/50 z-50 md:hidden backdrop-blur-xs transition-opacity"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
 
-            {selectedStop ? (
-              <div className="min-w-0 truncate">
-                <div className="flex items-center gap-1.5 truncate text-xs font-black text-[var(--text-h)]">
-                  <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--brand)] animate-pulse" />
-                  <span className="truncate">{stopName(selectedStop)}</span>
-                </div>
-                {firstUpcoming && firstUpcomingLine && (
-                  <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 truncate">
-                    <span
-                      className="px-1 rounded text-[9px] text-white"
-                      style={{ backgroundColor: firstUpcomingLine.color }}
-                    >
-                      {firstUpcomingLine.number}
-                    </span>
-                    <Clock className="h-2.5 w-2.5 shrink-0" />
-                    <span>{firstUpcoming.timeLabel} ({firstUpcoming.minutesUntil} p)</span>
+      {/* SideNavBar - Hidden on desktop when collapsed or on full map */}
+      {!isMapView ? (
+        <SideNavBar
+          mobileOpen={mobileMenuOpen}
+          onCloseMobile={() => setMobileMenuOpen(false)}
+        />
+      ) : mobileMenuOpen ? (
+        <SideNavBar
+          mobileOpen={true}
+          onCloseMobile={() => setMobileMenuOpen(false)}
+        />
+      ) : null}
+
+      {/* Main Content Wrapper */}
+      {isMapView ? (
+        /* =========================================================================
+           FULL-SCREEN MAP VIEW (Zero margins, zero padding, 100% viewport coverage)
+           ========================================================================= */
+        <div className="w-full h-screen h-[100dvh] m-0 p-0 overflow-hidden relative flex flex-col">
+          {/* Map Canvas */}
+          <div className="w-full h-full relative">
+            <MapView />
+          </div>
+
+          {/* Floating Line Selector and Menu Bar */}
+          <MapLineSelector onOpenMenu={() => setMobileMenuOpen(true)} />
+
+          {/* Floating Selected Stop Card Overlay if a stop is clicked */}
+          {selectedStop && (
+            <div className="absolute bottom-20 md:bottom-6 left-3 right-3 md:left-auto md:right-6 md:w-[420px] max-h-[75vh] z-30 bg-white rounded-3xl border-2 border-[#657933] shadow-2xl overflow-hidden flex flex-col pointer-events-auto transition-all animate-in fade-in slide-in-from-bottom-4">
+              <StopCard variant="panel" />
+            </div>
+          )}
+        </div>
+      ) : (
+        /* =========================================================================
+           STANDARD VIEW (Sidebar + TopNavBar + Content with comfortable spacing)
+           ========================================================================= */
+        <div
+          className={`
+            flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-300
+            ${sidebarCollapsed ? 'md:ml-0' : 'md:ml-[280px]'}
+          `}
+        >
+          {/* TopNavBar (Fixed 64px header) */}
+          <TopNavBar
+            mobileMenuOpen={mobileMenuOpen}
+            onToggleMobileMenu={() => setMobileMenuOpen((prev) => !prev)}
+          />
+
+          {/* Page Content Canvas */}
+          <main className="flex-1 pt-18 md:pt-20 px-3 md:px-6 pb-6 md:pb-8 flex flex-col gap-4 md:gap-6 w-full min-w-0 max-w-7xl mx-auto">
+            {activeTab === 'dashboard' ? (
+              /* Városi Közlekedési Irányítópult (Dashboard) */
+              <DashboardView />
+            ) : activeTab === 'schedules' ? (
+              /* Menetrendek View (Exact Stitch Timetable Management design) */
+              <TimetableManagement />
+            ) : activeTab === 'stops' ? (
+              /* Megállók Explorer View */
+              <StopList />
+            ) : activeTab === 'planner' ? (
+              /* Útvonaltervező View */
+              <div className="bg-white rounded-2xl border-2 border-[#DDE1D6] p-4 md:p-6 shadow-sm">
+                <div className="flex items-center justify-between pb-4 border-b border-[#DDE1D6] mb-4">
+                  <div>
+                    <h2 className="text-xl md:text-2xl font-black text-[#191d15] flex items-center gap-2.5">
+                      <Compass className="h-6 w-6 text-[#657933]" />
+                      <span>{hu ? 'Útvonaltervező A-ból B-be' : 'Planificator de rute'}</span>
+                    </h2>
+                    <p className="text-xs md:text-sm font-semibold text-[#505747] mt-1">
+                      {hu
+                        ? 'Válassza ki az indulási és érkezési megállót a leggyorsabb buszjárat megtalálásához!'
+                        : 'Alegeți stația de plecare și sosire pentru a găsi cel mai rapid traseu!'}
+                    </p>
                   </div>
-                )}
+                </div>
+                <TripPlanner />
               </div>
             ) : (
-              <div className="min-w-0 truncate">
-                <span className="text-xs font-bold text-[var(--text-h)] uppercase tracking-wider">
-                  {activeTab === 'stops'
-                    ? (hu ? 'Megállók listája' : 'Listă stații')
-                    : activeTab === 'lines'
-                      ? (hu ? 'Buszjáratok' : 'Linii autobuz')
-                      : (hu ? 'Útvonaltervező' : 'Planificator')}
-                </span>
-              </div>
+              /* Járatok View (Újragondolt, nem végtelenül görgetős kártyarács & metró nézet) */
+              <LinesView />
             )}
-          </div>
-
-          {/* Center drag pill */}
-          <div
-            className="flex flex-col items-center justify-center px-2 py-1"
-            onClick={(e) => {
-              e.stopPropagation();
-              setSheetState((prev) =>
-                prev === 'min' ? 'half' : prev === 'half' ? 'full' : 'min',
-              );
-            }}
-          >
-            <span className="h-1.2 w-10 rounded-full bg-[var(--border-strong)]" />
-          </div>
-
-          {/* Right snap state quick toggles */}
-          <div className="flex items-center gap-1 shrink-0">
-            {/* Peek / Map View */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSheetState('min');
-              }}
-              className={`rounded-lg px-2 py-1 text-[10px] font-black uppercase tracking-wider transition ${
-                sheetState === 'min'
-                  ? 'bg-[var(--brand)] text-white shadow-xs'
-                  : 'bg-[var(--surface)] text-[var(--text-muted)] hover:text-[var(--text-h)]'
-              }`}
-              title={hu ? 'Térkép nézet (Összecsukás)' : 'Hartă (Restrânge)'}
-            >
-              {hu ? 'Térkép' : 'Hartă'}
-            </button>
-
-            {/* Half View */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSheetState('half');
-              }}
-              className={`rounded-lg p-1.5 transition ${
-                sheetState === 'half'
-                  ? 'bg-[var(--brand)] text-white shadow-xs'
-                  : 'bg-[var(--surface)] text-[var(--text-muted)] hover:text-[var(--text-h)]'
-              }`}
-              title={hu ? 'Fél nézet' : 'Vizualizare jumătate'}
-            >
-              <Minimize2 className="h-3.5 w-3.5" />
-            </button>
-
-            {/* Full View */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSheetState('full');
-              }}
-              className={`rounded-lg p-1.5 transition ${
-                sheetState === 'full'
-                  ? 'bg-[var(--brand)] text-white shadow-xs'
-                  : 'bg-[var(--surface)] text-[var(--text-muted)] hover:text-[var(--text-h)]'
-              }`}
-              title={hu ? 'Teljes képernyő' : 'Ecran complet'}
-            >
-              <Maximize2 className="h-3.5 w-3.5" />
-            </button>
-          </div>
+          </main>
         </div>
+      )}
 
-        {/* Sheet Content Area */}
-        <div className="min-h-0 flex-1 overflow-hidden bg-[var(--panel)]">
-          <Sidebar mode="mobile" />
-        </div>
-      </div>
-
-      <FullScheduleModal />
+      {/* 2026 Senior-Friendly Bottom Mobile Navigation Bar */}
+      <BottomNavBar />
     </div>
   );
 }
-

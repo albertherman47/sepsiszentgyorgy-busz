@@ -2,43 +2,39 @@
 @import "maplibre-gl/dist/maplibre-gl.css";
 
 :root {
-  --font-sans: "Figtree", "Segoe UI", sans-serif;
-  --font-display: "Outfit", "Figtree", "Segoe UI", sans-serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
-  --bg: #edf2f4;
-  --panel: #ffffff;
-  --surface: #f5f8f9;
+  --bg: #F7F8F4;
+  --panel: #FFFFFF;
+  --surface: #ECEFE2;
+  --surface-low: #F2F5E8;
+  --surface-high: #E6EADD;
 
-  --border: #e2e9ed;
-  --border-strong: #cbd7dc;
+  --border: #DDE1D6;
+  --border-strong: #C6C8B7;
 
-  --text: #566875;
-  --text-h: #142a38;
-  --text-muted: #7a8b95;
+  --text: #45483B;
+  --text-h: #191D15;
+  --text-muted: #73796D;
 
-  --brand: #087e72;
-  --brand-dark: #05665d;
-  --brand-soft: rgba(8, 126, 114, 0.09);
+  --brand: #4d601d;
+  --brand-container: #657933;
+  --brand-dark: #3b4d0a;
+  --brand-soft: rgba(101, 121, 51, 0.12);
+  --on-brand-container: #eeffc0;
 
-  --accent-warm: #d05a22;
+  --success: #3F8F5B;
+  --danger: #C9534B;
+  --warning: #D99A2B;
+  --accent-warm: #d96b27;
 
   font-family: var(--font-sans);
-  font-size: 16px;
-  line-height: 1.45;
+  font-size: 14px;
+  line-height: 1.5;
   color: var(--text);
 
-  background:
-    radial-gradient(
-      1000px 550px at 8% -10%,
-      rgba(8, 126, 114, 0.08),
-      transparent 55%
-    ),
-    radial-gradient(
-      900px 500px at 100% 0%,
-      rgba(65, 136, 169, 0.07),
-      transparent 50%
-    ),
-    var(--bg);
+  background: var(--bg);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -57,14 +53,16 @@ html,
 body,
 #root {
   margin: 0;
+  padding: 0;
   width: 100%;
-  height: 100%;
+  min-height: 100%;
   max-width: none;
 }
 
 body {
   min-height: 100dvh;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: var(--bg);
 }
 
@@ -102,14 +100,14 @@ input:focus-visible {
   background:
     linear-gradient(
       145deg,
-      #09988b 0%,
-      #087e72 55%,
-      #05665d 100%
+      #78903c 0%,
+      #657933 55%,
+      #4d5e23 100%
     );
 
   box-shadow:
-    0 8px 18px rgba(8, 126, 114, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 8px 18px rgba(101, 121, 51, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 /* -------------------------------------------------------
@@ -312,7 +310,7 @@ input:focus-visible {
   color: white;
 
   box-shadow:
-    0 4px 12px rgba(15, 118, 110, 0.32);
+    0 4px 12px rgba(101, 121, 51, 0.32);
 
   animation: route-bus 1.35s ease-in-out infinite;
 }

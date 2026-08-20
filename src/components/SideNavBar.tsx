@@ -9,6 +9,7 @@ import {
   Route as RouteIcon,
 } from 'lucide-react';
 import { useAppStore, type ActiveTab } from '../store/useAppStore';
+import { SepsiBusLogo } from './SepsiBusLogo';
 
 interface SideNavBarProps {
   mobileOpen?: boolean;
@@ -83,19 +84,23 @@ export function SideNavBar({ mobileOpen = false, onCloseMobile }: SideNavBarProp
     >
       {/* Brand Header & Collapse Toggle */}
       <div className="flex items-center justify-between gap-2 mb-6 px-1">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-xl bg-[#657933] flex items-center justify-center text-[#eeffc0] font-black text-sm shadow-xs shrink-0">
-            TF
+        <button
+          type="button"
+          onClick={() => handleNavClick('dashboard')}
+          className="flex items-center gap-2.5 min-w-0 text-left hover:opacity-90 transition-opacity cursor-pointer"
+        >
+          <div className="w-10 h-10 rounded-2xl bg-[#F7F8F4] border border-[#DDE1D6] flex items-center justify-center p-1 shadow-2xs shrink-0">
+            <SepsiBusLogo variant="mark" className="w-8 h-8" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-lg font-extrabold text-[#657933] leading-tight truncate">
-              TransitFlow
+            <h1 className="text-lg font-black text-[#657933] leading-tight truncate tracking-tight">
+              Sepsi Busz
             </h1>
             <p className="text-[11px] text-[#73796D] font-bold truncate">
-              {hu ? 'Sepsiszentgyörgy Busz' : 'City Transit Admin'}
+              {hu ? 'Sepsiszentgyörgy' : 'Sfântu Gheorghe'}
             </p>
           </div>
-        </div>
+        </button>
 
         {/* Close/Collapse button */}
         <button

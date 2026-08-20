@@ -1,9 +1,10 @@
-import { Bell, Bus, Languages } from 'lucide-react';
+import { Bell, Languages } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+import { SepsiBusLogo } from './SepsiBusLogo';
 
 const labels = {
   hu: {
-    title: 'Sepsiszentgyörgy Busz',
+    title: 'Sepsi Busz',
     subtitle: 'Menetrend & térkép',
     lang: 'RO',
     languageLabel: 'Váltás románra',
@@ -11,7 +12,7 @@ const labels = {
   },
 
   ro: {
-    title: 'Autobuz Sfântu Gheorghe',
+    title: 'Sepsi Busz',
     subtitle: 'Orar & hartă',
     lang: 'HU',
     languageLabel: 'Schimbă în maghiară',
@@ -30,17 +31,14 @@ export function Header() {
       {/* Brand */}
       <div className="flex min-w-0 items-center gap-3">
         <div
-          className="brand-mark flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F7F8F4] border border-[#DDE1D6] p-1"
           aria-hidden
         >
-          <Bus
-            className="h-[18px] w-[18px]"
-            strokeWidth={2.4}
-          />
+          <SepsiBusLogo variant="mark" className="w-8 h-8" />
         </div>
 
         <div className="min-w-0 text-left">
-          <h1 className="truncate font-[family-name:var(--font-display)] text-[16px] font-bold tracking-tight text-[var(--text-h)]">
+          <h1 className="truncate font-[family-name:var(--font-display)] text-[16px] font-extrabold tracking-tight text-[#191d15]">
             {t.title}
           </h1>
 

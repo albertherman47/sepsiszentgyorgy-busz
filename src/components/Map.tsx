@@ -10,6 +10,7 @@ import {
   type Marker as MarkerType,
 } from 'maplibre-gl';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+import type { Line } from '../types/bus';
 import { CITY_CENTER, DEFAULT_ZOOM, getStopById, lines, stops } from '../data/busData';
 import { useAppStore } from '../store/useAppStore';
 import { useBusData } from '../hooks/useBusData';
@@ -19,7 +20,74 @@ setWorkerUrl(maplibreWorkerUrl);
 
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
 const ROUTES_SOURCE = 'bus-routes';
+const ROUTES_CASING_LAYER = 'bus-routes-line-casing';
 const ROUTES_LAYER = 'bus-routes-line';
+
+/**
+ * Lekéri a járat koordinátáit (MultiLineString formátumban [ [lng, lat], ... ][])
+ */
+function getLineMultiLineCoordinates(
+  line: Line,
+  direction?: 'outbound' | 'return',
+): [number, number][][] {
+  if (direction && line.directionPaths?.[direction] && line.directionPaths[direction]!.length > 0) {
+    return line.directionPaths[direction]!;
+  }
+  if (line.paths && line.paths.length > 0) {
+    return line.paths;
+  }
+  if (line.roadPath && line.roadPath.length > 0) {
+    return [line.roadPath];
+  }
+  if (line.path && line.path.length > 0) {
+    return [line.path];
+  }
+  const stopIdsToUse =
+    (direction === 'return' ? line.returnStopIds : line.outboundStopIds) ||
+    line.directionStopIds?.[direction ?? 'outbound'] ||
+    line.stopIds;
+  const stopCoords = stopIdsToUse
+    .map((sid) => getStopById(sid))
+    .filter((s): s is NonNullable<typeof s> => !!s)
+    .map((s) => [s.lng, s.lat] as [number, number]);
+
+  return stopCoords.length > 0 ? [stopCoords] : [];
+}
+
+/**
+ * GeoJSON FeatureCollection összeállítása
+ */
+function buildRoutesGeoJSON(
+  selectedLineId: string | null,
+  selectedDirection: 'outbound' | 'return',
+) {
+  const activeLines = selectedLineId
+    ? lines.filter((line) => line.id === selectedLineId)
+    : lines;
+
+  return {
+    type: 'FeatureCollection' as const,
+    features: activeLines.map((line) => {
+      const coordinates = getLineMultiLineCoordinates(
+        line,
+        line.id === selectedLineId ? selectedDirection : undefined,
+      );
+
+      return {
+        type: 'Feature' as const,
+        properties: {
+          id: line.id,
+          color: line.color,
+          number: line.number,
+        },
+        geometry: {
+          type: 'MultiLineString' as const,
+          coordinates,
+        },
+      };
+    }),
+  };
+}
 
 // Esri World Imagery (Ingyenes műholdas térkép csempék)
 const SATELLITE_STYLE = {
@@ -127,36 +195,8 @@ export function MapView() {
 
   const setSelectedStopId = useAppStore((s) => s.setSelectedStopId);
   const selectedDirection = useAppStore((s) => s.selectedLineDirection);
-
-  useEffect(() => {
-  const map = mapRef.current;
-  if (!map || !map.getSource(ROUTES_SOURCE)) return;
-  const source = map.getSource(ROUTES_SOURCE) as any;
-
-  const activeLines = selectedLineId 
-    ? lines.filter((line) => line.id === selectedLineId)
-    : lines;
-
-  source.setData({
-    type: 'FeatureCollection',
-    features: activeLines.map((line) => {
-      const coordinates =
-        line.id === selectedLineId && line.directionPaths?.[selectedDirection]
-          ? line.directionPaths[selectedDirection]
-          : line.paths ?? [line.path];
-
-      return {
-        type: 'Feature',
-        properties: { id: line.id, color: line.color, number: line.number },
-        geometry: { type: 'MultiLineString', coordinates },
-      };
-    }),
-  });
-}, [selectedLineId, selectedDirection]);
-
   const flyToStopId = useAppStore((s) => s.flyToStopId);
   const requestFlyToStop = useAppStore((s) => s.requestFlyToStop);
-
   const userLocation = useAppStore((s) => s.userLocation);
 
   // ---------------------------------------------------------------------------
@@ -189,12 +229,26 @@ export function MapView() {
 
       map.addSource(ROUTES_SOURCE, {
         type: 'geojson',
-        data: {
-          type: 'FeatureCollection',
-          features: [], // Induláskor teljesen üres
+        data: buildRoutesGeoJSON(selectedLineId, selectedDirection),
+      });
+
+      // Kontrasztos fehér háttérvonal (casing)
+      map.addLayer({
+        id: ROUTES_CASING_LAYER,
+        type: 'line',
+        source: ROUTES_SOURCE,
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round',
+        },
+        paint: {
+          'line-color': '#ffffff',
+          'line-width': selectedLineId ? 9 : 5.5,
+          'line-opacity': 0.9,
         },
       });
 
+      // Fő útvonalvonal a járat színével
       map.addLayer({
         id: ROUTES_LAYER,
         type: 'line',
@@ -205,7 +259,7 @@ export function MapView() {
         },
         paint: {
           'line-color': ['get', 'color'],
-          'line-width': 6,
+          'line-width': selectedLineId ? 6 : 3.5,
           'line-opacity': 1,
         },
       });
@@ -257,54 +311,73 @@ export function MapView() {
   }, [isSatellite]);
 
   // ---------------------------------------------------------------------------
-  // 3. VONAL LÁTHATÓSÁGA
+  // 3. JÁRAT ÚTVONALÁNAK VALÓS IDEJŰ FRISSÍTÉSE
   // ---------------------------------------------------------------------------
   useEffect(() => {
     const map = mapRef.current;
-
     if (!map) return;
 
-    const apply = () => {
-      if (!map.getLayer(ROUTES_LAYER)) return;
+    const updateRouteData = () => {
+      if (!map.getSource(ROUTES_SOURCE)) {
+        if (!map.getSource(ROUTES_SOURCE)) {
+          map.addSource(ROUTES_SOURCE, {
+            type: 'geojson',
+            data: buildRoutesGeoJSON(selectedLineId, selectedDirection),
+          });
 
-      if (!selectedLineId) {
-        map.setFilter(ROUTES_LAYER, null);
-        // Nincs kiválasztott járat:
-        // minden járat látható.
-        map.setPaintProperty(
-          ROUTES_LAYER,
-          'line-opacity',
-          0.85,
-        );
+          map.addLayer({
+            id: ROUTES_CASING_LAYER,
+            type: 'line',
+            source: ROUTES_SOURCE,
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: {
+              'line-color': '#ffffff',
+              'line-width': selectedLineId ? 9 : 5.5,
+              'line-opacity': 0.9,
+            },
+          });
 
+          map.addLayer({
+            id: ROUTES_LAYER,
+            type: 'line',
+            source: ROUTES_SOURCE,
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: {
+              'line-color': ['get', 'color'],
+              'line-width': selectedLineId ? 6 : 3.5,
+              'line-opacity': 1,
+            },
+          });
+        }
+        return;
+      }
+
+      const source = map.getSource(ROUTES_SOURCE) as any;
+      source.setData(buildRoutesGeoJSON(selectedLineId, selectedDirection));
+
+      if (map.getLayer(ROUTES_LAYER)) {
         map.setPaintProperty(
           ROUTES_LAYER,
           'line-width',
-          4,
+          selectedLineId ? 6 : 3.5,
         );
-      } else {
-        // Csak a kiválasztott járat legyen látható.
-        map.setFilter(ROUTES_LAYER, ['==', ['get', 'id'], selectedLineId]);
+      }
+      if (map.getLayer(ROUTES_CASING_LAYER)) {
         map.setPaintProperty(
-          ROUTES_LAYER,
-          'line-opacity',
-          1,
-        );
-
-        map.setPaintProperty(
-          ROUTES_LAYER,
+          ROUTES_CASING_LAYER,
           'line-width',
-          6,
+          selectedLineId ? 9 : 5.5,
         );
       }
     };
 
     if (map.isStyleLoaded()) {
-      apply();
+      updateRouteData();
     } else {
-      map.once('load', apply);
+      map.once('load', updateRouteData);
+      map.once('styledata', updateRouteData);
     }
-  }, [selectedLineId]);
+  }, [selectedLineId, selectedDirection]);
 
   // ---------------------------------------------------------------------------
   // 4. KAMERA IGAZÍTÁSA A KIVÁLASZTOTT JÁRATRA
@@ -441,33 +514,30 @@ export function MapView() {
     // Ha megálló van kiválasztva vagy ráközelítés zajlik, ne méretezzük vissza a teljes vonalra
     if (selectedStop || flyToStopId) return;
 
-    const activeLine = lines.find(
-      (line) => line.id === selectedLineId,
-    );
+    const activeLine = lines.find((line) => line.id === selectedLineId);
+    if (!activeLine) return;
 
-    const routeCoordinates = activeLine?.paths?.flat() ?? activeLine?.path ?? [];
+    const multiCoords = getLineMultiLineCoordinates(activeLine, selectedDirection);
+    const flatCoords = multiCoords.flat();
 
-    if (!activeLine || routeCoordinates.length === 0) return;
+    if (flatCoords.length === 0) return;
 
-    const bounds = routeCoordinates.reduce(
-      (b, coord) => b.extend(coord as [number, number]),
-      new LngLatBounds(
-        routeCoordinates[0],
-        routeCoordinates[0],
-      ),
+    const bounds = flatCoords.reduce(
+      (b, coord) => b.extend(coord),
+      new LngLatBounds(flatCoords[0], flatCoords[0]),
     );
 
     map.fitBounds(bounds, {
       padding: {
-        top: 60,
-        bottom: 60,
-        left: 60,
-        right: 60,
+        top: 70,
+        bottom: 70,
+        left: 70,
+        right: 70,
       },
-      maxZoom: 15,
-      duration: 750,
+      maxZoom: 15.5,
+      duration: 800,
     });
-  }, [selectedLineId, selectedStop, flyToStopId]);
+  }, [selectedLineId, selectedDirection, selectedStop, flyToStopId]);
   // ---------------------------------------------------------------------------
   // 5. MEGÁLLÓ MARKEREK LÉTREHOZÁSA
   //

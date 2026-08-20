@@ -17,6 +17,7 @@ import { lines, schedules, getStopById } from '../data/busData';
 import { useAppStore } from '../store/useAppStore';
 import { useBusData, getLineEndpoints } from '../hooks/useBusData';
 import { MapView } from './Map';
+import { StopCard } from './StopCard';
 import type { Schedule } from '../types/bus';
 
 export function LinesView() {
@@ -30,7 +31,7 @@ export function LinesView() {
   const setFullScheduleStopId = useAppStore((s) => s.setFullScheduleStopId);
   const setActiveTab = useAppStore((s) => s.setActiveTab);
 
-  const { stopName, lineName } = useBusData();
+  const { stopName, lineName, selectedStop } = useBusData();
   const hu = language === 'hu';
 
   // Active Line
@@ -513,8 +514,8 @@ export function LinesView() {
           6. CONTENT SECTION - VIEW 3: INTEGRATED MAP VIEW
           ========================================================================= */}
       {viewMode === 'map' && (
-        <div className="bg-white rounded-3xl border-2 border-[#DDE1D6] overflow-hidden shadow-sm flex flex-col h-[550px] relative">
-          <div className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur-md px-4 py-2 rounded-2xl border border-[#DDE1D6] shadow-sm flex items-center gap-2 pointer-events-none">
+        <div className="bg-white rounded-3xl border-2 border-[#DDE1D6] overflow-hidden shadow-sm flex flex-col h-[550px] md:h-[620px] relative">
+          <div className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-[#DDE1D6] shadow-sm flex items-center gap-2 pointer-events-none">
             <span
               className="w-3.5 h-3.5 rounded-full shrink-0"
               style={{ backgroundColor: currentLine.color }}
@@ -527,6 +528,13 @@ export function LinesView() {
           <div className="w-full h-full">
             <MapView />
           </div>
+
+          {/* Floating Selected Stop Card Overlay inside Lines Map View */}
+          {selectedStop && (
+            <div className="absolute bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-[380px] max-h-[70%] z-20 bg-white rounded-2xl border-2 border-[#657933] shadow-2xl overflow-hidden flex flex-col pointer-events-auto">
+              <StopCard variant="panel" />
+            </div>
+          )}
         </div>
       )}
     </div>

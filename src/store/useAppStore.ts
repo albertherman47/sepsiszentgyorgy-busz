@@ -62,7 +62,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   searchQuery: '',
   flyToStopId: null,
   userLocation: null,
-  activeTab: 'stops',
+  activeTab: 'dashboard',
 
   plannerOriginStopId: null,
   plannerDestinationStopId: null,

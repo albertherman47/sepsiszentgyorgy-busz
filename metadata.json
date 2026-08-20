@@ -1,6 +1,6 @@
 {
-  "name": "Sepsiszentgyörgy Busz",
-  "description": "Sepsiszentgyörgy / Sfântu Gheorghe busz menetrend és interaktív térkép (bus timetable and interactive map)",
+  "name": "Sepsi Busz",
+  "description": "Sepsi Busz - Sepsiszentgyörgy / Sfântu Gheorghe hivatalos menetrend és utastájékoztató alkalmazás",
   "requestFramePermissions": ["geolocation"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

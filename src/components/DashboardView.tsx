@@ -17,6 +17,7 @@ import { lines, schedules, getStopById } from '../data/busData';
 import { useAppStore } from '../store/useAppStore';
 import { useBusData, getLineEndpoints } from '../hooks/useBusData';
 import { getNextDeparture } from '../utils/timeUtils';
+import { SepsiBusLogo } from './SepsiBusLogo';
 import type { Line, Stop } from '../types/bus';
 
 export function DashboardView() {
@@ -204,19 +205,24 @@ export function DashboardView() {
         <div className="absolute bottom-0 left-1/3 -mb-16 w-60 h-60 rounded-full bg-[#eeffc0]/15 blur-2xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/20 pb-5">
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="flex h-2.5 w-2.5 rounded-full bg-[#eeffc0] animate-pulse" />
-              <span className="text-xs font-black uppercase tracking-widest text-[#eeffc0]">
-                {hu ? 'Sepsiszentgyörgy Városi Közlekedés' : 'Transport Public Sfântu Gheorghe'}
-              </span>
+          <div className="flex items-center gap-4">
+            <div className="flex w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white p-1 shadow-md shrink-0 items-center justify-center overflow-hidden">
+              <SepsiBusLogo variant="full" className="w-full h-full object-contain" />
             </div>
-            <h1 className="text-2xl md:text-4xl font-black tracking-tight text-white">
-              {greeting}!
-            </h1>
-            <p className="text-sm md:text-base font-semibold text-white/90 mt-1 capitalize">
-              {dateString}
-            </p>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="flex h-2.5 w-2.5 rounded-full bg-[#eeffc0] animate-pulse" />
+                <span className="text-xs font-black uppercase tracking-widest text-[#eeffc0]">
+                  Sepsi Busz · {hu ? 'Sepsiszentgyörgy' : 'Sfântu Gheorghe'}
+                </span>
+              </div>
+              <h1 className="text-2xl md:text-4xl font-black tracking-tight text-white">
+                {greeting}!
+              </h1>
+              <p className="text-sm md:text-base font-semibold text-white/90 mt-1 capitalize">
+                {dateString}
+              </p>
+            </div>
           </div>
 
           {/* Live Clock & Network Badge */}
@@ -564,50 +570,102 @@ export function DashboardView() {
 
           <div className="pt-3 border-t border-[#DDE1D6] flex items-center justify-between text-xs font-black text-[#505747]">
             <span>{hu ? 'SMS-ben: 7458-as szám' : 'Prin SMS: la 7458'}</span>
-            <span className="text-[#657933]">{hu ? 'MultiTrans Rt.' : 'MultiTrans'}</span>
+            <span className="text-[#657933]">Sepsi Busz</span>
           </div>
         </div>
 
-        {/* Dispatcher & Contact Info */}
+        {/* Dispatcher & Contact Info & Opening Hours */}
         <div className="bg-white p-5 md:p-6 rounded-3xl border-2 border-[#DDE1D6] shadow-sm flex flex-col justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 text-[#657933] mb-1">
               <Phone className="h-5 w-5" />
               <h3 className="font-black text-base text-[#191d15]">
-                {hu ? 'Közlekedési Ügyfélszolgálat' : 'Relații cu Publicul'}
+                {hu ? 'Sepsi Busz Ügyfélszolgálat' : 'Sepsi Bus Relații cu Publicul'}
               </h3>
             </div>
             <p className="text-xs font-semibold text-[#505747] mb-3">
               {hu
-                ? 'MultiTrans Rt. Sepsiszentgyörgy diszpécserszolgálat'
-                : 'Dispecerat MultiTrans Sfântu Gheorghe'}
+                ? 'Hivatalos elérhetőségek és pénztári nyitvatartás'
+                : 'Contact oficial și program de funcționare'}
             </p>
 
-            <div className="space-y-2 text-xs font-bold text-[#191d15]">
-              <div className="p-3 rounded-xl bg-[#f8f9f4] flex flex-col gap-1">
-                <span className="text-[#73796D] text-[11px] font-black uppercase">
-                  {hu ? 'Diszpécser telefonszám:' : 'Dispecerat:'}
-                </span>
+            <div className="space-y-2.5 text-xs font-bold text-[#191d15]">
+              {/* Phone */}
+              <div className="p-3 rounded-xl bg-[#f8f9f4] flex items-center justify-between gap-2">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[#73796D] text-[11px] font-black uppercase">
+                    {hu ? 'Telefonszám:' : 'Număr de telefon:'}
+                  </span>
+                  <a
+                    href="tel:0758044661"
+                    className="font-black text-base text-[#657933] hover:underline"
+                  >
+                    0758 044 661
+                  </a>
+                </div>
                 <a
-                  href="tel:+40267315570"
-                  className="font-black text-sm text-[#657933] hover:underline"
+                  href="tel:0758044661"
+                  className="px-3 py-1.5 rounded-lg bg-[#657933] text-white text-xs font-bold hover:bg-[#526328] transition-colors"
                 >
-                  +40 267 315 570
+                  {hu ? 'Hívás' : 'Apelează'}
                 </a>
               </div>
 
+              {/* Address */}
               <div className="p-3 rounded-xl bg-[#f8f9f4] flex flex-col gap-1">
-                <span className="text-[#73796D] text-[11px] font-black uppercase">
-                  {hu ? 'Központi iroda:' : 'Sediu central:'}
+                <div className="flex items-center gap-1.5 text-[#73796D] text-[11px] font-black uppercase">
+                  <MapPin className="h-3.5 w-3.5 text-[#657933]" />
+                  <span>{hu ? 'Cím:' : 'Adresă:'}</span>
+                </div>
+                <span className="text-xs font-bold text-[#191d15]">
+                  str. Reimesch Ferenc nr. 4, 520072 Sfântu Gheorghe
                 </span>
-                <span>Str. Fabricii nr. 1, Sfântu Gheorghe</span>
+              </div>
+
+              {/* Opening Hours Schedule */}
+              <div className="p-3 rounded-xl bg-[#f8f9f4] flex flex-col gap-2">
+                <div className="flex items-center gap-1.5 text-[#73796D] text-[11px] font-black uppercase">
+                  <Clock className="h-3.5 w-3.5 text-[#657933]" />
+                  <span>{hu ? 'Nyitvatartás:' : 'Program de lucru:'}</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+                  <div className="flex justify-between py-0.5 border-b border-[#DDE1D6]/50">
+                    <span className="text-[#505747] font-semibold">{hu ? 'Hétfő:' : 'Luni:'}</span>
+                    <span className="font-extrabold text-[#191d15]">7:00–15:00</span>
+                  </div>
+                  <div className="flex justify-between py-0.5 border-b border-[#DDE1D6]/50">
+                    <span className="text-[#505747] font-semibold">{hu ? 'Kedd:' : 'Marți:'}</span>
+                    <span className="font-extrabold text-[#191d15]">7:00–15:00</span>
+                  </div>
+                  <div className="flex justify-between py-0.5 border-b border-[#DDE1D6]/50">
+                    <span className="text-[#505747] font-semibold">{hu ? 'Szerda:' : 'Miercuri:'}</span>
+                    <span className="font-extrabold text-[#191d15]">7:00–15:00</span>
+                  </div>
+                  <div className="flex justify-between py-0.5 border-b border-[#DDE1D6]/50">
+                    <span className="text-[#505747] font-semibold">{hu ? 'Csütörtök:' : 'Joi:'}</span>
+                    <span className="font-extrabold text-[#191d15]">7:00–15:00</span>
+                  </div>
+                  <div className="flex justify-between py-0.5 border-b border-[#DDE1D6]/50">
+                    <span className="text-[#505747] font-semibold">{hu ? 'Péntek:' : 'Vineri:'}</span>
+                    <span className="font-extrabold text-[#191d15]">7:00–14:00</span>
+                  </div>
+                  <div className="flex justify-between py-0.5 border-b border-[#DDE1D6]/50">
+                    <span className="text-[#505747] font-semibold">{hu ? 'Szombat:' : 'Sâmbătă:'}</span>
+                    <span className="font-extrabold text-[#BA1A1A] uppercase">{hu ? 'Zárva' : 'Închis'}</span>
+                  </div>
+                  <div className="flex justify-between py-0.5 border-b border-[#DDE1D6]/50">
+                    <span className="text-[#505747] font-semibold">{hu ? 'Vasárnap:' : 'Duminică:'}</span>
+                    <span className="font-extrabold text-[#BA1A1A] uppercase">{hu ? 'Zárva' : 'Închis'}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="pt-3 border-t border-[#DDE1D6] flex items-center justify-between text-xs font-black text-[#505747]">
-            <span>{hu ? 'H-P: 06:00 - 22:00' : 'L-V: 06:00 - 22:00'}</span>
-            <span className="text-[#657933]">{hu ? 'Szo-Vas: 07:00 - 20:00' : 'S-D: 07:00 - 20:00'}</span>
+            <span>{hu ? 'Sepsiszentgyörgy' : 'Sfântu Gheorghe'}</span>
+            <span className="text-[#657933]">Sepsi Busz</span>
           </div>
         </div>
       </div>

@@ -1,0 +1,23 @@
+export const line7Data = {
+    id: 'line-7',
+    number: '7',
+    name_hu: 'Szemerja – Vasútállomás',
+    name_ro: 'Simeria – Gara CFR',
+    color: '#00f5d4',
+    stopIds: [
+        'simeria-str-berzei',
+        'spitalul-judetean',
+        'str-dealului',
+        'str-tigarete-1',
+        'str-tigarete-2',
+        'str-tigarete-3',
+        'comfort-residence',
+        'str-fabricii-1',
+        'bdul-n-iorga-2',
+        'bdul-n-iorga-1',
+        'bdul-g-balan-2',
+        'bdul-g-balan-1',
+        'str-sporturilor',
+        'gara-cfr-1',
+    ],
+};

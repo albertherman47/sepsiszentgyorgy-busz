@@ -646,14 +646,31 @@ export function TripPlanner() {
                     {opt.segments.map((segment, index) => {
                       const previous = opt.segments[index - 1];
                       const wait = previous ? Math.max(0, Math.round((segment.departureAt.getTime() - previous.arrivalAt.getTime()) / 60_000)) : 0;
-                      return <div key={`${segment.line.id}-${segment.departureAt.getTime()}-${index}`} className="space-y-2">
+                      return <div key={`${segment.line?.id ?? 'walk'}-${segment.departureAt.getTime()}-${index}`} className="space-y-2">
                         {previous && <div className="flex items-center gap-2 rounded-lg bg-[var(--surface)] px-2 py-1.5 text-[11px] text-[var(--text-muted)]"><Footprints className="h-3.5 w-3.5 shrink-0 text-amber-500" /><span>{t.waitAt}: <strong className="text-[var(--text-h)]">{stopName(segment.fromStop)}</strong> · {wait} p</span><ChevronRight className="ml-auto h-3.5 w-3.5" /></div>}
                         <div className="rounded-xl border border-[var(--border)]/70 bg-[var(--surface)]/60 p-2.5">
                           <div className="flex items-center justify-between gap-2 text-xs">
-                            <div className="flex min-w-0 items-center gap-2"><span className="flex h-6 min-w-6 items-center justify-center rounded-lg px-1 text-xs font-bold text-white" style={{ backgroundColor: segment.line.color }}>{segment.line.number}</span><Bus className="h-3.5 w-3.5 shrink-0 text-[var(--text-muted)]" /><span className="truncate font-semibold text-[var(--text-h)]">{stopName(segment.fromStop)} → {stopName(segment.toStop)}</span></div>
+                            <div className="flex min-w-0 items-center gap-2">
+  {segment.isWalking ? (
+    <>
+      <Footprints className="h-4 w-4 shrink-0 text-amber-500" />
+      <span className="truncate font-semibold text-[var(--text-h)]">{language === "hu" ? "Séta" : "Pe jos"}: {stopName(segment.fromStop)} → {stopName(segment.toStop)}</span>
+    </>
+  ) : (
+    <>
+      <span className="flex h-6 min-w-6 items-center justify-center rounded-lg px-1 text-xs font-bold text-white" style={{ backgroundColor: segment.line?.color }}>{segment.line?.number}</span>
+      <Bus className="h-3.5 w-3.5 shrink-0 text-[var(--text-muted)]" />
+      <span className="truncate font-semibold text-[var(--text-h)]">{stopName(segment.fromStop)} → {stopName(segment.toStop)}</span>
+    </>
+  )}
+</div>
                             <span className="shrink-0 font-bold tabular-nums text-[var(--text-h)]">{segment.departureTimeLabel}–{segment.arrivalTimeLabel}</span>
                           </div>
-                          <p className="mt-2 text-[10px] leading-relaxed text-[var(--text-muted)]"><strong>{segment.viaStops.length} {t.stops}:</strong> {segment.viaStops.map(stopName).join(' · ')}</p>
+                          {segment.isWalking ? (
+  <p className="mt-2 text-[10px] leading-relaxed text-[var(--text-muted)]"><strong>{language === "hu" ? "Távolság" : "Distanță"}:</strong> {segment.walkMeters} m ({segment.durationMinutes} {language === "hu" ? "perc" : "min"})</p>
+) : (
+  <p className="mt-2 text-[10px] leading-relaxed text-[var(--text-muted)]"><strong>{segment.viaStops.length} {t.stops}:</strong> {segment.viaStops.map(stopName).join(' · ')}</p>
+)}
                         </div>
                       </div>;
                     })}

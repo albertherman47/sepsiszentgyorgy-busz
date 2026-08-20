@@ -29,7 +29,7 @@ export function ToastNotification() {
         {isSuccess && <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />}
         {isError && <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />}
 
-        <span className="leading-snug">{geoToast.message}</span>
+        <span className="leading-snug whitespace-pre-line">{geoToast.message}</span>
 
         <button
           type="button"

@@ -57,8 +57,8 @@ export interface Schedule {
 }
 
 export interface DepartureCountdown {
-  schedule: Schedule;
-  line: Line;
+  schedule?: Schedule;
+  line?: Line;
   departureAt: Date;
   minutesUntil: number;
   timeLabel: string;
@@ -69,7 +69,9 @@ export type SelectedLineId = string | null;
 export type SelectedStopId = string | null;
 
 export interface TripSegment {
-  line: Line;
+  isWalking?: boolean;
+  walkMeters?: number;
+  line?: Line;
   fromStop: Stop;
   toStop: Stop;
   /** Every actual stop used on this section, inclusive. */
@@ -80,7 +82,7 @@ export interface TripSegment {
   arrivalAt: Date;
   durationMinutes: number;
   minutesUntilDeparture: number;
-  schedule: Schedule;
+  schedule?: Schedule;
 }
 
 export interface TripOption {

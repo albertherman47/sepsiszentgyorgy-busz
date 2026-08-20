@@ -1,14 +1,17 @@
 import type { Line, Schedule, Stop, TripOption, TripSegment } from '../types/bus';
-import { getUpcomingDepartures } from './timeUtils';
+import { getUpcomingDepartures, getNextDeparture } from './timeUtils';
 
-const MIN_TRANSFER_MINUTES = 2;
-const MAX_TRANSFERS = 3;
-const MAX_DEPARTURES_PER_BOARDING = 3;
-const MAX_RIDE_MINUTES = 180;
-const MAX_SEARCH_STATES = 1_200;
-const TRANSFER_PENALTY_MINUTES = 8;
-const LONG_WAIT_THRESHOLD_MINUTES = 25;
-const LONG_WAIT_EXTRA_WEIGHT = 2;
+export const ROUTING_CONFIG = {
+  minTransferMinutes: 2,
+  maxTransfers: 3,
+  transferPenaltyMinutes: 5,
+  walkingPenaltyMinutes: 2,
+  maxWalkingMinutes: 15,
+  maxRideMinutes: 180,
+  maxSearchStates: 10_000,
+  longWaitThresholdMinutes: 20,
+  longWaitExtraWeight: 1.5,
+};
 
 export function getDistanceKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const earthRadiusKm = 6371;
@@ -22,147 +25,403 @@ export function findNearestStop(location: { lat: number; lng: number }, stops: S
   return stops.reduce<Stop | null>((nearest, stop) => !nearest || getDistanceKm(location.lat, location.lng, stop.lat, stop.lng) < getDistanceKm(location.lat, location.lng, nearest.lat, nearest.lng) ? stop : nearest, null);
 }
 
-export function formatDateToHHMM(date: Date): string {
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-}
-
 function normalizedDirection(schedule: Schedule): string | null {
   const value = schedule.direction?.ro ?? schedule.direction?.hu;
   return value ? value.toLocaleLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim() : null;
 }
 
-type TimedDeparture = { schedule: Schedule; label: string; date: Date };
-type SearchState = { stopId: string; availableAt: Date; segments: TripSegment[]; visitedStopIds: Set<string> };
-
-function waitingMinutes(segments: TripSegment[], requestedDeparture: Date): number[] {
-  return segments.map((segment, index) => Math.max(0, Math.round((segment.departureAt.getTime() - (index ? segments[index - 1].arrivalAt : requestedDeparture).getTime()) / 60_000)));
+interface WalkEdge {
+    toStopId: string;
+    distanceMeters: number;
+    durationMinutes: number;
 }
 
-function rankOption(option: Omit<TripOption, 'totalWaitingMinutes' | 'longWaitPenaltyMinutes' | 'weightedCostMinutes'>, requestedDeparture: Date) {
-  const waits = waitingMinutes(option.segments, requestedDeparture);
-  const totalWaitingMinutes = waits.reduce((total, wait) => total + wait, 0);
-  const longWaitPenaltyMinutes = waits.reduce((total, wait) => total + Math.max(0, wait - LONG_WAIT_THRESHOLD_MINUTES) * LONG_WAIT_EXTRA_WEIGHT, 0);
-  const weightedCostMinutes = option.totalDurationMinutes + option.transferCount * TRANSFER_PENALTY_MINUTES + longWaitPenaltyMinutes;
-  return { ...option, totalWaitingMinutes, longWaitPenaltyMinutes, weightedCostMinutes };
-}
-
-/** True when `a` is no worse on every traveller-relevant criterion than `b`. */
-function dominates(a: TripOption, b: TripOption): boolean {
-  const arrivalA = a.segments.at(-1)!.arrivalAt.getTime();
-  const arrivalB = b.segments.at(-1)!.arrivalAt.getTime();
-  const departureA = a.firstDepartureAt.getTime();
-  const departureB = b.firstDepartureAt.getTime();
-  // Same arrival: a later first departure always leaves the passenger with
-  // less time spent travelling/waiting before reaching that same outcome.
-  if (arrivalA === arrivalB && departureA > departureB) return true;
-  const noWorse = arrivalA <= arrivalB
-    && departureA >= departureB
-    && a.transferCount <= b.transferCount
-    && a.totalWaitingMinutes <= b.totalWaitingMinutes
-    && a.weightedCostMinutes <= b.weightedCostMinutes;
-  const strictlyBetter = arrivalA < arrivalB
-    || departureA > departureB
-    || a.transferCount < b.transferCount
-    || a.totalWaitingMinutes < b.totalWaitingMinutes
-    || a.weightedCostMinutes < b.weightedCostMinutes;
-  return noWorse && strictlyBetter;
-}
-
-/**
- * Time-dependent timetable routing.
- *
- * The source provides scheduled times at individual stops and a direction for
- * each service, not an assumed travel speed. An edge is therefore valid only
- * when the destination publishes a later time for the same line and direction.
- * This fixes reverse-direction journeys and makes all displayed arrival and
- * transfer times come from the source timetable.
- */
-export function planTrip(originStopId: string, destinationStopId: string, departureAfter: Date, schedules: Schedule[], lines: Line[], stops: Stop[]): TripOption[] {
-  if (!originStopId || !destinationStopId || originStopId === destinationStopId || Number.isNaN(departureAfter.getTime())) return [];
-
-  const stopById = new Map(stops.map((stop) => [stop.id, stop]));
-  const lineById = new Map(lines.map((line) => [line.id, line]));
-  if (!stopById.has(originStopId) || !stopById.has(destinationStopId)) return [];
-
-  const byStopAndLine = new Map<string, Schedule[]>();
-  const byLineAndDirection = new Map<string, Schedule[]>();
-  for (const schedule of schedules) {
-    if (!lineById.has(schedule.lineId)) continue;
-    const stopKey = `${schedule.stopId}|${schedule.lineId}`;
-    byStopAndLine.set(stopKey, [...(byStopAndLine.get(stopKey) ?? []), schedule]);
-    const direction = normalizedDirection(schedule);
-    if (direction) {
-      const directionKey = `${schedule.lineId}|${direction}`;
-      byLineAndDirection.set(directionKey, [...(byLineAndDirection.get(directionKey) ?? []), schedule]);
-    }
+class MinHeap<T> {
+  heap: T[] = [];
+  compare: (a: T, b: T) => number;
+  constructor(compare: (a: T, b: T) => number) { this.compare = compare; }
+  get length() { return this.heap.length; }
+  push(val: T) {
+    this.heap.push(val);
+    this.bubbleUp(this.heap.length - 1);
   }
-
-  const nextDepartures = (schedule: Schedule, after: Date, count = MAX_DEPARTURES_PER_BOARDING): TimedDeparture[] =>
-    getUpcomingDepartures(schedule, count, after)
-      .map((item) => ({ schedule, label: item.timeLabel, date: item.departureAt }))
-      .filter((item) => item.date.getTime() >= after.getTime() - 30_000);
-
-  const options: TripOption[] = [];
-  const queue: SearchState[] = [{ stopId: originStopId, availableAt: departureAfter, segments: [], visitedStopIds: new Set([originStopId]) }];
-  let expandedStates = 0;
-
-  while (queue.length && expandedStates++ < MAX_SEARCH_STATES) {
-    queue.sort((a, b) => a.availableAt.getTime() - b.availableAt.getTime());
-    const state = queue.shift()!;
-    if (state.segments.length > MAX_TRANSFERS + 1) continue;
-
-    for (const line of lines) {
-      const boardingSchedules = byStopAndLine.get(`${state.stopId}|${line.id}`) ?? [];
-      const earliestBoarding = state.segments.length ? new Date(state.availableAt.getTime() + MIN_TRANSFER_MINUTES * 60_000) : state.availableAt;
-
-      for (const boardingSchedule of boardingSchedules) {
-        const direction = normalizedDirection(boardingSchedule);
-        if (!direction) continue;
-        const destinationSchedules = byLineAndDirection.get(`${line.id}|${direction}`) ?? [];
-
-        for (const departure of nextDepartures(boardingSchedule, earliestBoarding)) {
-          for (const arrivalSchedule of destinationSchedules) {
-            if (arrivalSchedule.stopId === state.stopId || state.visitedStopIds.has(arrivalSchedule.stopId)) continue;
-            const arrivalStop = stopById.get(arrivalSchedule.stopId);
-            const fromStop = stopById.get(state.stopId);
-            if (!arrivalStop || !fromStop) continue;
-            const arrival = nextDepartures(arrivalSchedule, new Date(departure.date.getTime() + 1_000), 1)[0];
-            if (!arrival) continue;
-            const durationMinutes = Math.round((arrival.date.getTime() - departure.date.getTime()) / 60_000);
-            if (durationMinutes < 1 || durationMinutes > MAX_RIDE_MINUTES) continue;
-
-            const segment: TripSegment = {
-              line, fromStop, toStop: arrivalStop, viaStops: [fromStop, arrivalStop],
-              departureTimeLabel: departure.label, departureAt: departure.date,
-              arrivalTimeLabel: arrival.label, arrivalAt: arrival.date, durationMinutes,
-              minutesUntilDeparture: Math.max(0, Math.ceil((departure.date.getTime() - departureAfter.getTime()) / 60_000)),
-              schedule: boardingSchedule,
-            };
-            const segments = [...state.segments, segment];
-            if (arrivalStop.id === destinationStopId) {
-              options.push(rankOption({
-                id: segments.map((item) => `${item.line.id}-${item.fromStop.id}-${item.toStop.id}-${item.departureAt.getTime()}`).join('_'),
-                isDirect: segments.length === 1, segments, totalDurationMinutes: Math.max(0, Math.ceil((arrival.date.getTime() - departureAfter.getTime()) / 60_000)),
-                transferCount: segments.length - 1, transferStop: segments[1]?.fromStop,
-                transferWaitMinutes: segments[1] ? Math.max(0, Math.round((segments[1].departureAt.getTime() - segments[0].arrivalAt.getTime()) / 60_000)) : undefined,
-                firstDepartureAt: segments[0].departureAt, minutesUntilFirstDeparture: Math.max(0, Math.ceil((segments[0].departureAt.getTime() - departureAfter.getTime()) / 60_000)),
-              }, departureAfter));
-            } else if (segments.length <= MAX_TRANSFERS) {
-              queue.push({ stopId: arrivalStop.id, availableAt: arrival.date, segments, visitedStopIds: new Set([...state.visitedStopIds, arrivalStop.id]) });
-            }
-          }
+  shift(): T | undefined {
+    if (this.heap.length === 0) return undefined;
+    const min = this.heap[0];
+    const last = this.heap.pop()!;
+    if (this.heap.length > 0) {
+      this.heap[0] = last;
+      this.sinkDown(0);
+    }
+    return min;
+  }
+  bubbleUp(idx: number) {
+    const val = this.heap[idx];
+    while (idx > 0) {
+      const parentIdx = Math.floor((idx - 1) / 2);
+      const parent = this.heap[parentIdx];
+      if (this.compare(val, parent) >= 0) break;
+      this.heap[idx] = parent;
+      idx = parentIdx;
+    }
+    this.heap[idx] = val;
+  }
+  sinkDown(idx: number) {
+    const length = this.heap.length;
+    const val = this.heap[idx];
+    while (true) {
+      const leftIdx = 2 * idx + 1;
+      const rightIdx = 2 * idx + 2;
+      let swapIdx = -1;
+      let leftVal: T | undefined;
+      if (leftIdx < length) {
+        leftVal = this.heap[leftIdx]!;
+        if (this.compare(leftVal, val) < 0) swapIdx = leftIdx;
+      }
+      if (rightIdx < length) {
+        const rightVal = this.heap[rightIdx]!;
+        if ((swapIdx === -1 && this.compare(rightVal, val) < 0) || 
+            (swapIdx !== -1 && leftVal && this.compare(rightVal, leftVal) < 0)) {
+          swapIdx = rightIdx;
         }
       }
+      if (swapIdx === -1) break;
+      this.heap[idx] = this.heap[swapIdx];
+      idx = swapIdx;
     }
+    this.heap[idx] = val;
+  }
+}
+
+export function planTrip(
+  originStopId: string, 
+  destinationStopId: string, 
+  departureAfter: Date, 
+  schedules: Schedule[], 
+  lines: Line[], 
+  stops: Stop[]
+): TripOption[] {
+  if (!originStopId || !destinationStopId || originStopId === destinationStopId || Number.isNaN(departureAfter.getTime())) return [];
+
+  const stopById = new Map(stops.map(s => [s.id, s]));
+  const lineById = new Map(lines.map(l => [l.id, l]));
+  if (!stopById.has(originStopId) || !stopById.has(destinationStopId)) return [];
+
+  // Build Route Sequences
+  const schedulesByRoute = new Map<string, { lineId: string, dir: string, schedules: Schedule[] }>();
+  for (const s of schedules) {
+    const dir = normalizedDirection(s);
+    if (!dir) continue;
+    const key = `${s.lineId}|${dir}`;
+    if (!schedulesByRoute.has(key)) schedulesByRoute.set(key, { lineId: s.lineId, dir, schedules: [] });
+    schedulesByRoute.get(key)!.schedules.push(s);
   }
 
-  const unique = new Map<string, TripOption>();
-  for (const option of options) {
-    const key = `${option.segments.map((segment) => `${segment.line.id}:${segment.fromStop.id}:${segment.toStop.id}`).join('|')}:${option.firstDepartureAt.getTime()}`;
-    if (!unique.has(key)) unique.set(key, option);
+  interface RouteData {
+      lineId: string;
+      direction: string;
+      stops: string[];
   }
-  const paretoOptimal = [...unique.values()].filter((option, index, all) => !all.some((candidate, candidateIndex) => candidateIndex !== index && dominates(candidate, option)));
-  return paretoOptimal
-    .sort((a, b) => a.weightedCostMinutes - b.weightedCostMinutes || a.totalDurationMinutes - b.totalDurationMinutes || a.transferCount - b.transferCount || a.firstDepartureAt.getTime() - b.firstDepartureAt.getTime())
-    .slice(0, 8);
+  
+  const routes: RouteData[] = [];
+  const scheduleLookup = new Map<string, Schedule>(); // key: lineId|dir|stopId
+  const routesByStop = new Map<string, { route: RouteData; stopIdx: number }[]>();
+
+  for (const { lineId, dir, schedules: routeSchedules } of schedulesByRoute.values()) {
+      const stopScores = routeSchedules.map(s => {
+          let times = s.times.length ? s.times : (s.weekendTimes ?? []);
+          const mins = times.map(t => {
+              let [h, m] = t.split(':').map(Number);
+              if (h < 3) h += 24; // Handle after midnight wraparound
+              return h * 60 + m;
+          }).sort((a,b) => a - b);
+          const median = mins[Math.floor(mins.length / 2)] ?? 0;
+          return { stopId: s.stopId, median };
+      });
+      
+      stopScores.sort((a, b) => a.median - b.median);
+      routes.push({
+          lineId,
+          direction: dir,
+          stops: stopScores.map(s => s.stopId)
+      });
+      const lastRoute = routes[routes.length - 1];
+      for (let i = 0; i < lastRoute.stops.length; i++) {
+          const stopId = lastRoute.stops[i];
+          if (!routesByStop.has(stopId)) routesByStop.set(stopId, []);
+          routesByStop.get(stopId)!.push({ route: lastRoute, stopIdx: i });
+      }
+      
+      for (const s of routeSchedules) {
+          scheduleLookup.set(`${lineId}|${dir}|${s.stopId}`, s);
+      }
+  }
+  
+  // Build walking edges
+  const walkEdges = new Map<string, WalkEdge[]>();
+  for (let i = 0; i < stops.length; i++) {
+      for (let j = 0; j < stops.length; j++) {
+          if (i === j) continue;
+          const distKm = getDistanceKm(stops[i].lat, stops[i].lng, stops[j].lat, stops[j].lng);
+          if (distKm <= 0.6) { // max 600m walking
+              const walkMin = Math.ceil(distKm * 1000 / 70); // ~1.16 m/s
+              if (walkMin <= ROUTING_CONFIG.maxWalkingMinutes) {
+                 if (!walkEdges.has(stops[i].id)) walkEdges.set(stops[i].id, []);
+                 walkEdges.get(stops[i].id)!.push({
+                     toStopId: stops[j].id,
+                     distanceMeters: Math.round(distKm * 1000),
+                     durationMinutes: walkMin
+                 });
+              }
+          }
+      }
+  }
+
+  // Search State
+  type SearchState = {
+      stopId: string;
+      availableAt: Date;
+      segments: TripSegment[];
+      visitedStopIds: Set<string>;
+      transferCount: number;
+      walkMeters: number;
+      firstDepartureAt?: Date; // Original departure time
+  };
+
+  const queue = new MinHeap<SearchState>((a, b) => a.availableAt.getTime() - b.availableAt.getTime());
+  queue.push({
+      stopId: originStopId,
+      availableAt: departureAfter,
+      segments: [],
+      visitedStopIds: new Set([originStopId]),
+      transferCount: 0,
+      walkMeters: 0
+  });
+  
+  // Also add walking from origin!
+  if (walkEdges.has(originStopId)) {
+      for (const w of walkEdges.get(originStopId)!) {
+          const arrAt = new Date(departureAfter.getTime() + w.durationMinutes * 60000);
+          queue.push({
+              stopId: w.toStopId,
+              availableAt: arrAt,
+              segments: [{
+                  isWalking: true,
+                  fromStop: stopById.get(originStopId)!,
+                  toStop: stopById.get(w.toStopId)!,
+                  viaStops: [],
+                  departureAt: departureAfter,
+                  departureTimeLabel: `${departureAfter.getHours().toString().padStart(2, '0')}:${departureAfter.getMinutes().toString().padStart(2, '0')}`,
+                  arrivalAt: arrAt,
+                  arrivalTimeLabel: `${arrAt.getHours().toString().padStart(2, '0')}:${arrAt.getMinutes().toString().padStart(2, '0')}`,
+                  durationMinutes: w.durationMinutes,
+                  walkMeters: w.distanceMeters,
+                  minutesUntilDeparture: 0
+              } as TripSegment],
+              visitedStopIds: new Set([originStopId, w.toStopId]),
+              transferCount: 0,
+              walkMeters: w.distanceMeters,
+              firstDepartureAt: departureAfter
+          });
+      }
+  }
+
+  // Pareto Frontier Tracking
+  // A state is dominated if another state reaches the same stop with:
+  // <= arrivalTime AND <= transferCount AND <= walkMeters AND >= firstDepartureAt
+  const frontiers = new Map<string, SearchState[]>();
+  
+  function isDominant(s: SearchState): boolean {
+      const arr = s.availableAt.getTime();
+      const firstDep = s.firstDepartureAt?.getTime() ?? 0; // earlier start is worse if same arrival
+      const existing = frontiers.get(s.stopId) || [];
+      
+      for (const e of existing) {
+          if (e.availableAt.getTime() <= arr && 
+              e.transferCount <= s.transferCount && 
+              e.walkMeters <= s.walkMeters &&
+              (e.firstDepartureAt?.getTime() ?? 0) >= firstDep) {
+              return false; // Dominated
+          }
+      }
+      
+      // Remove dominated states
+      const newFrontier = existing.filter(e => {
+         return !(arr <= e.availableAt.getTime() && 
+                  s.transferCount <= e.transferCount && 
+                  s.walkMeters <= e.walkMeters && 
+                  firstDep >= (e.firstDepartureAt?.getTime() ?? 0));
+      });
+      newFrontier.push(s);
+      frontiers.set(s.stopId, newFrontier);
+      return true;
+  }
+  
+  let expandedStates = 0;
+  
+  while (queue.length > 0 && expandedStates++ < ROUTING_CONFIG.maxSearchStates) {
+    
+      
+      const state = queue.shift()!;
+      
+      // Found destination!
+      if (state.stopId === destinationStopId) {
+          // We can record this as an option. The Pareto filter handles optimality.
+          continue; // Don't expand from destination
+      }
+      
+      if (state.transferCount > ROUTING_CONFIG.maxTransfers) continue;
+      
+      // 1. Bus Edges
+      const activeRoutes = routesByStop.get(state.stopId!) || [];
+      for (const { route, stopIdx } of activeRoutes) {
+          if (stopIdx === route.stops.length - 1) continue;
+          
+          const boardSched = scheduleLookup.get(`${route.lineId}|${route.direction}|${state.stopId}`);
+          if (!boardSched) continue;
+          
+          const isFirst = state.segments.length === 0;
+          // If previous was walk, we don't need min transfer time because walk time is already added. But a 1-min buffer is safe.
+          const buffer = (isFirst || state.segments[state.segments.length-1].isWalking) ? 0 : ROUTING_CONFIG.minTransferMinutes;
+          
+          const earliestBoarding = new Date(state.availableAt.getTime() + buffer * 60000);
+          
+          // Explore next few departures if first bus, else just the immediate next one
+          const deps = getUpcomingDepartures(boardSched, isFirst ? 3 : 1, earliestBoarding);
+          
+          for (const dep of deps) {
+              let currentVehTime = dep.departureAt;
+              const viaStops: Stop[] = [stopById.get(state.stopId)!];
+              
+              for (let i = stopIdx + 1; i < route.stops.length; i++) {
+                  const nextStopId = route.stops[i];
+                  const nextSched = scheduleLookup.get(`${route.lineId}|${route.direction}|${nextStopId}`);
+                  if (!nextSched) break;
+                  
+                  const arr = getNextDeparture(nextSched, currentVehTime);
+                  if (!arr) break;
+                  
+                  const travelMin = (arr.departureAt.getTime() - currentVehTime.getTime()) / 60000;
+                  if (travelMin > 60) break; // Missed bus threshold
+                  
+                  currentVehTime = arr.departureAt;
+                  viaStops.push(stopById.get(nextStopId)!);
+                  
+                  // Can alight here!
+                  if (state.visitedStopIds.has(nextStopId)) continue;
+                  
+                  const duration = (currentVehTime.getTime() - dep.departureAt.getTime()) / 60000;
+                  
+                  const newSegment = {
+                      line: lineById.get(route.lineId),
+                      fromStop: stopById.get(state.stopId)!,
+                      toStop: stopById.get(nextStopId)!,
+                      viaStops: [...viaStops],
+                      departureTimeLabel: dep.timeLabel,
+                      departureAt: dep.departureAt,
+                      arrivalTimeLabel: arr.timeLabel,
+                      arrivalAt: arr.departureAt,
+                      durationMinutes: duration,
+                      minutesUntilDeparture: Math.max(0, Math.ceil((dep.departureAt.getTime() - state.availableAt.getTime())/60000)),
+                      schedule: boardSched
+                  } as TripSegment;
+                  
+                  const nState: SearchState = {
+                      stopId: nextStopId,
+                      availableAt: currentVehTime,
+                      segments: [...state.segments, newSegment],
+                      visitedStopIds: new Set([...state.visitedStopIds, nextStopId]),
+                      transferCount: state.transferCount + (isFirst || state.segments[state.segments.length-1].isWalking ? 0 : 1),
+                      walkMeters: state.walkMeters,
+                      firstDepartureAt: state.firstDepartureAt ?? dep.departureAt
+                  };
+                  
+                  if (isDominant(nState)) {
+                      queue.push(nState);
+                  }
+              }
+          }
+      }
+      
+      // 2. Walking Edges
+      if (state.stopId && state.segments.length > 0 && !state.segments[state.segments.length-1].isWalking) {
+          const wEdges = walkEdges.get(state.stopId!) || [];
+          for (const w of wEdges) {
+              if (state.visitedStopIds.has(w.toStopId)) continue;
+              const arrAt = new Date(state.availableAt.getTime() + w.durationMinutes * 60000);
+              const nState: SearchState = {
+                  stopId: w.toStopId,
+                  availableAt: arrAt,
+                  segments: [...state.segments, {
+                      isWalking: true,
+                      fromStop: stopById.get(state.stopId)!,
+                      toStop: stopById.get(w.toStopId)!,
+                      viaStops: [],
+                      departureAt: state.availableAt,
+                      departureTimeLabel: `${state.availableAt.getHours().toString().padStart(2, '0')}:${state.availableAt.getMinutes().toString().padStart(2, '0')}`,
+                      arrivalAt: arrAt,
+                      arrivalTimeLabel: `${arrAt.getHours().toString().padStart(2, '0')}:${arrAt.getMinutes().toString().padStart(2, '0')}`,
+                      durationMinutes: w.durationMinutes,
+                      walkMeters: w.distanceMeters,
+                      minutesUntilDeparture: 0
+                  } as TripSegment],
+                  visitedStopIds: new Set([...state.visitedStopIds, w.toStopId]),
+                  transferCount: state.transferCount, // Walk doesn't add to bus transfers count conceptually, or does it? It's a transfer between lines. Let's count it if next is bus.
+                  walkMeters: state.walkMeters + w.distanceMeters,
+                  firstDepartureAt: state.firstDepartureAt
+              };
+              if (isDominant(nState)) queue.push(nState);
+          }
+      }
+  }
+
+  // Convert Pareto frontier at destination to TripOptions
+  const results = frontiers.get(destinationStopId) || [];
+  
+  function rankOption(state: SearchState): TripOption {
+      const waits = state.segments.map((seg, idx) => {
+          if (idx === 0) return 0;
+          return Math.max(0, Math.round((seg.departureAt.getTime() - state.segments[idx-1].arrivalAt.getTime()) / 60000));
+      });
+      const totalWait = waits.reduce((a, b) => a + b, 0);
+      const longWait = waits.reduce((a, w) => a + Math.max(0, w - ROUTING_CONFIG.longWaitThresholdMinutes) * ROUTING_CONFIG.longWaitExtraWeight, 0);
+      
+      const busTransfers = state.segments.filter(s => !s.isWalking).length - 1;
+      const actualTransfers = Math.max(0, busTransfers);
+      
+      const travelTime = Math.max(0, Math.round((state.availableAt.getTime() - departureAfter.getTime()) / 60000));
+      const walkTime = state.segments.filter(s => s.isWalking).reduce((a, b) => a + b.durationMinutes, 0);
+      
+      const weightedCost = travelTime + 
+          actualTransfers * ROUTING_CONFIG.transferPenaltyMinutes + 
+          walkTime * ROUTING_CONFIG.walkingPenaltyMinutes + 
+          longWait;
+
+      const firstDep = state.firstDepartureAt ?? state.segments[0].departureAt;
+      
+      return {
+          id: state.segments.map(s => s.isWalking ? 'walk' : s.line!.id).join('_') + '_' + firstDep.getTime(),
+          isDirect: actualTransfers === 0,
+          segments: state.segments,
+          totalDurationMinutes: travelTime,
+          totalWaitingMinutes: totalWait,
+          longWaitPenaltyMinutes: longWait,
+          weightedCostMinutes: weightedCost,
+          transferCount: actualTransfers,
+          firstDepartureAt: firstDep,
+          transferStop: state.segments.length > 1 ? state.segments[0].toStop : undefined,
+          transferWaitMinutes: waits[1] || 0,
+          minutesUntilFirstDeparture: Math.max(0, Math.ceil((firstDep.getTime() - departureAfter.getTime()) / 60000))
+      };
+  }
+
+  // Only keep routes that are not ridiculously long
+  // Filter and sort by weighted cost
+  const finalOptions = results
+     .map(rankOption)
+     .filter(opt => opt.totalDurationMinutes <= ROUTING_CONFIG.maxRideMinutes)
+     .sort((a, b) => a.weightedCostMinutes - b.weightedCostMinutes);
+     
+  console.log("Total expanded states:", expandedStates);
+  return finalOptions.slice(0, 5); // Return top 5 best alternative routes
 }

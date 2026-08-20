@@ -1,3 +1,4 @@
+const parseCache = new Map<string, { hours: number, minutes: number }>();
 import type { DepartureCountdown, Line, Schedule } from '../types/bus';
 
 /** Parse "HH:MM" into hours and minutes, normalizing 24:xx to 00:xx */
@@ -11,8 +12,15 @@ export function parseTimeLabel(time: string): { hours: number; minutes: number }
 
 /** Build a Date for today at the given "HH:MM" (local time) */
 export function timeLabelToDate(time: string, now: Date = new Date()): Date {
-  const { hours, minutes } = parseTimeLabel(time);
-  const d = new Date(now);
+  
+  let cacheKey = time;
+  let cached = parseCache.get(cacheKey);
+  if (!cached) {
+    cached = parseTimeLabel(time);
+    parseCache.set(cacheKey, cached);
+  }
+  const { hours, minutes } = cached;
+  const d = new Date(now.getTime());
   d.setHours(hours, minutes, 0, 0);
   return d;
 }
